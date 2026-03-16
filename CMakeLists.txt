@@ -142,6 +142,21 @@ file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 #  |___|_| |_|___/\__\__,_|_|_|
 #
 
+# ---------------------------------------------------------
+# My executable
+# ---------------------------------------------------------
+
+# Create executable form your main file
+add_executable(my_program src/main/main.cpp)
+
+# Link external libraries needed by the program
+target_link_libraries(my_program PRIVATE fmt::fmt)
+
+# ---------------------------------------------------------
+
+# List of installable targets
+set(TARGET_LIST my_program)
+
 install(TARGETS ${TARGET_LIST}
   BUNDLE DESTINATION bin
   LIBRARY DESTINATION lib

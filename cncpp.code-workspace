@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../cncpp_main"
 		}
 	],
 	"settings": {
