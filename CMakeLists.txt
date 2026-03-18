@@ -148,9 +148,11 @@ file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 
 # Create executable form your main file
 add_executable(my_program src/main/main.cpp)
+#add_executable(my_test example/example1/test.cpp)
 
 # Link external libraries needed by the program
 target_link_libraries(my_program PRIVATE fmt::fmt)
+#target_link_libraries(my_test PRIVATE fmt::fmt)
 
 # ---------------------------------------------------------
 
