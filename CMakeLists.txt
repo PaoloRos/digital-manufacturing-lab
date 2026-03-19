@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(VERSION 3.5)
 set(VERSION "0.0.1")
 project(CNCpp VERSION ${VERSION} LANGUAGES CXX)
 
