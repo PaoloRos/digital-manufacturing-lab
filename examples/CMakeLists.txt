@@ -35,6 +35,8 @@ endmacro()
 #                            |_|                          |___/
 
 # create_example(`src directory` NAME `file name` SRCS `src files`)
-create_example(example1 NAME myFile SRCS test.cpp)
+#create_example(example1 NAME myFile SRCS test.cpp)
 #create_example(example2 NAME ex_2 SRCS test.cpp)
-create_example(example2 NAME ex_3 SRCS altro.cpp)
+#create_example(example2 NAME ex_3 SRCS altro.cpp)
+#create_example(task1 NAME task1 SRCS main_task1.cpp)
+create_example(example3 NAME exe_ex3 SRCS main_ex3.cpp)
