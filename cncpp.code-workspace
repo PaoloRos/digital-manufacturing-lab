@@ -1,9 +1,11 @@
 {
 	"folders": [
 		{
+			"name": "cncpp",
 			"path": "."
 		},
 		{
+			"name": "cncpp-refer",
 			"path": "../cncpp-refer"
 		}
 	],

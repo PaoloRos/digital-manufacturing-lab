@@ -34,3 +34,7 @@ Implement this directly in the main() function.
 Make a test by changing the loop from a reference based one (const Vector2D &element / Vector2D &element) to a copyied one (Vector2D element) and verify the change.
 
 When printing the std::vector, try calling before the for loop the to_csv_header(), and inside the loop call to_csv_row(). Is the result a valid CSV formatted text? Can be imported for example in Matlab to plot the Vector2D's values?
+
+## Add doxygen documentation
+
+## Verify whether there are more task

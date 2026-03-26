@@ -39,4 +39,13 @@ endmacro()
 #create_example(example2 NAME ex_2 SRCS test.cpp)
 #create_example(example2 NAME ex_3 SRCS altro.cpp)
 #create_example(task1 NAME task1 SRCS main_task1.cpp)
-create_example(example3 NAME exe_ex3 SRCS main_ex3.cpp)
+create_example(example3 NAME vector2D SRCS main.cpp Vector2D.cpp)
+
+include(CTest)
+
+add_executable(test_example3_vector2d
+  ${CMAKE_CURRENT_LIST_DIR}/example3/test_vector2d.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/example3/Vector2D.cpp
+)
+
+add_test(NAME example3_vector2d_unit_tests COMMAND test_example3_vector2d)

@@ -70,11 +70,11 @@ FetchContent_Declare(yaml-cpp
   GIT_TAG HEAD
 )
 
-FetchContent_Declare(keystroker
-  GIT_REPOSITORY https://github.com/pbosetti/keystroker.git
-  GIT_SHALLOW    TRUE
-  GIT_TAG HEAD
-)
+#FetchContent_Declare(keystroker
+#  GIT_REPOSITORY https://github.com/pbosetti/keystroker.git
+#  GIT_SHALLOW    TRUE
+#  GIT_TAG HEAD
+#)
 
 set(DOCUMENTATION OFF CACHE BOOL "")
 set(INC_BRIDGE_SUPPORT OFF CACHE BOOL "")
@@ -90,7 +90,7 @@ FetchContent_Declare(mosquitto
   GIT_TAG v2.0.20
 )
 
-FetchContent_MakeAvailable(fmt rang json yaml-cpp keystroker mosquitto)
+#FetchContent_MakeAvailable(fmt rang json yaml-cpp keystroker mosquitto)
 
 message(STATUS "Dependencies fetched.")
 
@@ -99,7 +99,7 @@ include_directories(
   ${rang_SOURCE_DIR}/include
   ${json_SOURCE_DIR}/include
   ${yaml-cpp_SOURCE_DIR}/include
-  ${keystroker_SOURCE_DIR}/include
+  #${keystroker_SOURCE_DIR}/include
   ${mosquitto_SOURCE_DIR}/include
   ${mosquitto_SOURCE_DIR}/lib/cpp
   # /opt/homebrew/include
@@ -152,7 +152,7 @@ add_executable(my_program src/main/main.cpp)
 #add_executable(my_test example/example1/test.cpp)
 
 # Link external libraries needed by the program
-target_link_libraries(my_program PRIVATE fmt::fmt)
+#target_link_libraries(my_program PRIVATE fmt::fmt)
 #target_link_libraries(my_test PRIVATE fmt::fmt)
 
 # ---------------------------------------------------------

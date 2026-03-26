@@ -1,2 +1,4 @@
 # Ogni volta che voglio configurare il progetto (cmake -B build)
 export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
+-d linea di comando o una roba così
