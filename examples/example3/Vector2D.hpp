@@ -4,6 +4,12 @@
 #include <ostream>
 #include <string>
 
+/// @class Vector2D
+/// @brief Represents a 2D vector with a textual label.
+///
+/// The class stores two Cartesian components (x, y) and a label.
+/// It provides basic vector operations, distance/norm utilities,
+/// CSV serialization helpers, and stream printing support.
 class Vector2D {
 public:
   /// @brief Constructs a vector with empty label and zero components.

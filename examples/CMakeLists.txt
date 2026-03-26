@@ -39,13 +39,24 @@ endmacro()
 #create_example(example2 NAME ex_2 SRCS test.cpp)
 #create_example(example2 NAME ex_3 SRCS altro.cpp)
 #create_example(task1 NAME task1 SRCS main_task1.cpp)
-create_example(example3 NAME vector2D SRCS main.cpp Vector2D.cpp)
+#create_example(example3 NAME vector2D SRCS main.cpp Vector2D.cpp)
 
 include(CTest)
 
-add_executable(test_example3_vector2d
-  ${CMAKE_CURRENT_LIST_DIR}/example3/test_vector2d.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/example3/Vector2D.cpp
-)
+if(BUILD_TESTING)
+  add_executable(ex_example3_unit_tests
+    ${CMAKE_CURRENT_LIST_DIR}/example3/vector2d_unit_tests.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/example3/Vector2D.cpp
+  )
+  set_target_properties(ex_example3_unit_tests PROPERTIES OUTPUT_NAME vector2d_unit_tests)
 
-add_test(NAME example3_vector2d_unit_tests COMMAND test_example3_vector2d)
+  add_executable(ex_example3_smoke_test
+    ${CMAKE_CURRENT_LIST_DIR}/example3/vector2d_smoke_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/example3/Vector2D.cpp
+  )
+  set_target_properties(ex_example3_smoke_test PROPERTIES OUTPUT_NAME vector2d_smoke_test)
+
+  add_test(NAME vector2d_unit_tests COMMAND ex_example3_unit_tests)
+  add_test(NAME vector2d_smoke_test COMMAND ex_example3_smoke_test)
+endif()
+

@@ -1,0 +1,32 @@
+PROJECT_NAME           = "Vector2D Exercise"
+PROJECT_BRIEF          = "Doxygen documentation for the Vector2D class"
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+
+INPUT                  = Vector2D.hpp MAINPAGE.md
+FILE_PATTERNS          = *.hpp *.md
+USE_MDFILE_AS_MAINPAGE = MAINPAGE.md
+MARKDOWN_SUPPORT       = YES
+RECURSIVE              = NO
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+
+OPTIMIZE_OUTPUT_FOR_C  = NO
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = NO
+MULTILINE_CPP_IS_BRIEF = NO
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+
+FULL_PATH_NAMES        = NO
+STRIP_FROM_PATH        = .
+
+EXCLUDE                = Vector2D.cpp main.cpp vector2d_unit_tests.cpp vector2d_smoke_test.cpp
