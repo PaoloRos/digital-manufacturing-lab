@@ -39,7 +39,7 @@ endmacro()
 #create_example(example2 NAME ex_2 SRCS test.cpp)
 #create_example(example2 NAME ex_3 SRCS altro.cpp)
 #create_example(task1 NAME task1 SRCS main_task1.cpp)
-#create_example(example3 NAME vector2D SRCS main.cpp Vector2D.cpp)
+create_example(example3 NAME main-vector2D SRCS main.cpp Vector2D.cpp)
 
 include(CTest)
 

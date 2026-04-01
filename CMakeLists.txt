@@ -158,7 +158,7 @@ add_executable(my_program src/main/main.cpp)
 # ---------------------------------------------------------
 
 # List of installable targets
-set(TARGET_LIST my_program)
+#set(TARGET_LIST my_program)
 
 install(TARGETS ${TARGET_LIST}
   BUNDLE DESTINATION bin

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['exercise_0',['Vector2D Exercise',['../index.html',1,'']]]
+  ['dependencies_0',['Project dependencies',['../index.html#autotoc_md1',1,'']]]
 ];

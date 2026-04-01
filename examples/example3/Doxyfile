@@ -20,6 +20,8 @@ MULTILINE_CPP_IS_BRIEF = NO
 GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 GENERATE_XML           = NO
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
 
 QUIET                  = NO
 WARNINGS               = YES
