@@ -39,7 +39,10 @@ endmacro()
 #create_example(example2 NAME ex_2 SRCS test.cpp)
 #create_example(example2 NAME ex_3 SRCS altro.cpp)
 #create_example(task1 NAME task1 SRCS main_task1.cpp)
-create_example(example3 NAME main-vector2D SRCS main.cpp Vector2D.cpp)
+#create_example(example3 NAME main-vector2D SRCS main.cpp Vector2D.cpp)
+#create_example(example4 NAME main-example4 SRCS main.cpp)
+#create_example(example5 NAME example5 SRCS example_5.cpp demo_smart_pointers.cpp)
+create_example(example6 NAME example6 SRCS example_6.cpp model.cpp LIBS fmt rang)
 
 include(CTest)
 

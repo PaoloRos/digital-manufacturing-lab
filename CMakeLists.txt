@@ -90,7 +90,7 @@ FetchContent_Declare(mosquitto
   GIT_TAG v2.0.20
 )
 
-#FetchContent_MakeAvailable(fmt rang json yaml-cpp keystroker mosquitto)
+FetchContent_MakeAvailable(fmt rang json yaml-cpp mosquitto) #keystroker
 
 message(STATUS "Dependencies fetched.")
 
@@ -117,10 +117,10 @@ link_directories(
 #   \____\___/|_| |_|_| |_|\__, |\__,_|_|  \___|\__,_| |_| |_|_|\___||___/
 #                          |___/
 
-# configure_file(
-#   ${SRC_DIR}/defines.hpp.in
-#   ${SRC_DIR}/defines.hpp
-# )
+ #configure_file(
+ #  ${SRC_DIR}/defines.hpp.in
+ #  ${SRC_DIR}/defines.hpp
+ #)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
 
@@ -148,7 +148,7 @@ file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 # ---------------------------------------------------------
 
 # Create executable form your main file
-add_executable(my_program src/main/main.cpp)
+#add_executable(my_program src/main/main.cpp)
 #add_executable(my_test example/example1/test.cpp)
 
 # Link external libraries needed by the program
