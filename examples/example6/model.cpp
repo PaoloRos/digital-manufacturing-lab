@@ -1,11 +1,84 @@
 #include "model.hpp"
 
-#include <exception>
+std::string trim(std::string str)
+{
+  str.erase(0, str.find_first_not_of(" "));
+  str.erase(str.find_last_not_of(" ") + 1);
+  return str;
+}
 
 Model::Model(std::string name, size_t n_states, size_t n_inputs)
 : _name(name), _n_states(n_states), _n_inputs(n_inputs) {
 
   _states.resize(_n_states, 0.0); // initialize state to zero
+}
+
+bool Model::load_config(std::string path) {
+  
+  // <folder>/model.txt
+  std::string file_name = path + "/" + _name + ".txt";
+  std::ifstream config_file(file_name);
+  if(!config_file.is_open()) {
+
+    throw std::runtime_error("Could not open config file: " + file_name);
+    //return false; // not necessary: verifica -> credo che se non gestita l'eccezione termina programma
+  }
+  
+  // map is a kind of container that stores key-value pairs, where the keys are unique and ordered. It provides fast lookup, insertion, and deletion of elements based on the keys. The keys are sorted in ascending order by default, but you can specify a custom sorting criterion if needed.
+  std::map<std::string, double> config; // map to store config values in a logic order
+  //std::unordered_map<std::string, double> config; // unordered map (hash map) for faster access, but order is not guaranteed
+
+  std::string line;
+  while(std::getline(config_file, line)) {
+
+    // k = 100.0
+    // m = 20.0
+    auto pos = line.find('=');
+    if(pos == std::string::npos) {
+      
+      throw std::runtime_error("Config file format error: expected 'key=value' format, but got: " + line);
+    }
+
+    std::string key = line.substr(0, pos);
+    std::string value_str = line.substr(pos + 1);
+
+    key = trim(key);
+    value_str = trim(value_str);
+
+    double value = std::stod(value_str);
+
+    config[key] = value;
+  }
+
+  config_file.close();
+
+  if(!set_config(config)) {
+
+      throw std::runtime_error("Invalid config values in file: " + file_name);
+    }
+  return true;
+}
+
+bool Model::save_config(std::string path) const {
+  auto maybe_config = get_config();
+  if(!maybe_config) {
+    return false;
+  }
+
+  // <folder>/model.txt
+  std::string file_name = path + "/" + _name + ".txt";
+  std::ofstream config_file(file_name);
+  if(!config_file.is_open()) {
+
+    throw std::runtime_error("Could not open config file for writing: " + file_name);
+  }
+    
+  for (const auto& [key, value] : maybe_config.value()) {
+    config_file << key << "=" << value << std::endl;
+  }
+
+  config_file.close();
+  return true;
 }
 
 void Model::set_x0(Vec initial_state) {
@@ -78,3 +151,4 @@ void Model::csv_row(std::ostream& os) const {
   }
   os << std::endl;
 }
+

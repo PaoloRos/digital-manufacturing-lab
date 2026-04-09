@@ -4,7 +4,7 @@ This is the repository of the code developed during the _Digital Manufacturing_ 
 
 This project is based on the reference repository provided for the course:
 
-- Reference repository: https://github.com/pbosetti/cncpp
+- **Reference repository**: https://github.com/pbosetti/cncpp
 
 ## Contents
 

@@ -8,8 +8,11 @@ Reads:
 
 Creates:
 - ./out/spring_plot.png
+- ./out/spring_state_space_plot.png
 - ./out/constant_force_plot.png
+- ./out/constant_force_state_space_plot.png
 - ./out/sinusoidal_force_plot.png
+- ./out/sinusoidal_force_state_space_plot.png
 """
 
 from __future__ import annotations
@@ -42,7 +45,7 @@ def load_data(csv_path: Path) -> tuple[list[float], list[float], list[float]]:
 
 
 def make_plot(simulation_name: str, csv_path: Path, output_path: Path, show_plot: bool) -> None:
-    """Create and save one plot with position and velocity versus time."""
+    """Create and save time-series and state-space plots for one simulation."""
     t_values, x0_values, x1_values = load_data(csv_path)
 
     plt.figure(figsize=(10, 6))
@@ -57,6 +60,24 @@ def make_plot(simulation_name: str, csv_path: Path, output_path: Path, show_plot
     plt.tight_layout()
 
     plt.savefig(output_path, dpi=160)
+    if show_plot:
+        plt.show()
+    plt.close()
+
+    state_space_output_path = output_path.with_name(
+        output_path.stem.replace("_plot", "_state_space_plot") + output_path.suffix
+    )
+
+    plt.figure(figsize=(8, 8))
+    plt.plot(x0_values, x1_values, linewidth=2.0)
+
+    plt.title(f"{simulation_name}: State Space")
+    plt.xlabel("x0 (position)")
+    plt.ylabel("x1 (velocity)")
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    plt.savefig(state_space_output_path, dpi=160)
     if show_plot:
         plt.show()
     plt.close()

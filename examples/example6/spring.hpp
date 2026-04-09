@@ -2,6 +2,9 @@
 
 #include "model.hpp"
 
+#include <iostream>
+#include <map>
+
 class Spring : public Model
 {
   public:
@@ -23,7 +26,15 @@ class Spring : public Model
     : Model(name, STATES_NUMBER, INPUTS_NUMBER) {} // 2 states (position and velocity), 0 input (force)
 
   protected:
+
     Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) override;
+
+    bool set_config( std::map<std::string, double> config) override;
+
+    std::optional<
+    std::map<std::string, double>
+    > get_config() const override
+      { return std::map<std::string, double>{ {"k", _k}, {"m", _m} }; }
   
   private:
     double _k = 100.0;  // Spring stiffness N/m
@@ -40,3 +51,25 @@ Vec Spring::compute_x_dot_impl(double dt, Vec inputs, Vec states)
 
   return x_dot;
 }
+
+bool Spring::set_config(std::map<std::string, double> config) 
+{
+  bool ret = true;  // returned value
+  if(config.find("k") != config.end()) {
+
+    _k = config["k"];
+  } else { 
+    std::cerr << "Warning: 'k' not found in config.\n";
+    ret = false;
+  }
+  if(config.find("m") != config.end()) {
+
+    _m = config["m"];
+  } else { 
+    std::cerr << "Warning: 'm' not found in config.\n";
+    ret = false;
+  }
+
+  return ret;
+  }
+
