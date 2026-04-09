@@ -2,6 +2,9 @@
 
 This is the repository of the code developed during the _Digital Manufacturing_ course, academic year 2025-26, Department of Industrial Engineering, University of Trento.
 
+This project is based on the reference repository provided for the course:
+
+- Reference repository: https://github.com/pbosetti/cncpp
 
 ## Contents
 
