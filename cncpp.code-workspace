@@ -5,7 +5,6 @@
 			"path": "."
 		},
 		{
-			"name": "cncpp-refer",
 			"path": "../cncpp-refer"
 		}
 	],

@@ -1,8 +1,22 @@
-/*build/
+# Build directories
+build/
+*/build/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.tcl
+
+# Project-specific
 src/defines.hpp
 usr/
 *.dgraph
 /*.csv
 .Rproj.user
+.vscode/
 
-.vscode
+# Misc
+*.log
+*.tmp
+.DS_Store
