@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <iostream>
+#include <sstream>
 
 // --- Local functions ---
 
@@ -10,6 +11,33 @@ static void trim(std::string& str)
 {
   str.erase(0, str.find_first_not_of(" "));
   str.erase(str.find_last_not_of(" ") + 1);
+}
+
+static std::string to_string(const ConfigErrorCode& code)
+{
+  switch (code) {
+    case ConfigErrorCode::MISSING_KEY: return "MISSING_KEY";
+    case ConfigErrorCode::INVALID_VALUE: return "INVALID_VALUE";
+    case ConfigErrorCode::OUT_OF_RANGE: return "OUT_OF_RANGE";
+    case ConfigErrorCode::UNKNOWN_KEY: return "UNKNOWN_KEY";
+    default: return "NONE";
+  }
+}
+
+static std::string build_config_error_message(
+  const std::string& file_name,
+  const ConfigErrors& errors
+) {
+  std::ostringstream oss;
+  oss << "Config error(s) in " << file_name << ": ";
+  for (const auto& error : errors) {
+    oss << "[" << to_string(error.code) 
+        << ", key='" << error.key << "'" 
+        << ( error.value? ", value=" + std::to_string(error.value.value()) : "" )
+        << "]"
+        << ( &error != &errors.back() ? ", " : "" );
+  }
+  return oss.str();
 }
 
 // ------------------------------
@@ -22,7 +50,7 @@ Model::Model(std::string name, size_t n_states, size_t n_inputs)
   _states.resize(_n_states, 0.0); // initialize state to zero
 }
 
-bool Model::load_config(std::string& path) 
+void Model::load_config(std::string& path) 
 {
   // <folder>/<model>.txt
   std::string file_name = path + "/" + _name + ".txt";
@@ -58,16 +86,18 @@ bool Model::load_config(std::string& path)
 
   config_file.close();
 
-  if(!set_config(config)) {
-      throw std::runtime_error("Invalid config values in file: " + file_name);
-    }
-  return true;
+  ConfigErrors errors = set_config(config);
+  if(!errors.empty()) {
+    throw std::runtime_error( build_config_error_message(file_name, errors) );
+  }
 }
 
-bool Model::save_config(std::string& path) const
+void Model::save_config(std::string& path) const
 {
   auto maybe_config = get_config();
-  if(!maybe_config) { return false; }
+  if(!maybe_config) { 
+    throw std::invalid_argument("No config available to save");
+  }
 
   // <folder>/<model>.txt
   std::string file_name = path + "/" + _name + ".txt";
@@ -81,7 +111,6 @@ bool Model::save_config(std::string& path) const
   }
 
   config_file.close();
-  return true;
 }
 
 void Model::set_x0(Vec initial_state) 

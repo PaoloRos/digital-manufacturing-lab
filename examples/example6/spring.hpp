@@ -30,7 +30,7 @@ class Spring : public Model
 
     Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) override;
 
-    bool set_config( std::map<std::string, double>& ) override;
+    ConfigErrors set_config( const std::map<std::string, double>& ) override;
 
     std::optional< std::map<std::string, double> > get_config() const override
       { return std::map<std::string, double>{ {"k", _k}, {"m", _m} }; }
@@ -51,30 +51,56 @@ Vec Spring::compute_x_dot_impl(double dt, Vec inputs, Vec states)
   return x_dot;
 }
 
-bool Spring::set_config(std::map<std::string, double>& config) 
+//bool Spring::set_config(const std::map<std::string, double>& config) 
+//{
+//  bool ret = true;  // returned value
+//  
+//  if(config.find("k") != config.end()) {
+//    _k = config["k"];
+//  } else { 
+//    std::cerr << rang::style::bold << rang::fg::yellow
+//              << "Warning: "
+//              << rang::style::reset << rang::fg::reset
+//              << "'k' not found in 'config'.\n";
+//    ret = false;
+//  }
+//
+//  if(config.find("m") != config.end()) {
+//    _m = config["m"];
+//  } else { 
+//    std::cerr << rang::style::bold << rang::fg::yellow
+//              << "Warning: "
+//              << rang::style::reset << rang::fg::reset
+//              << "'m' not found in 'config'.\n";
+//    ret = false;
+//  }
+//
+//  return ret;
+//  }
+
+ConfigErrors Spring::set_config(const std::map<std::string, double>& config)
 {
-  bool ret = true;  // returned value
-  
-  if(config.find("k") != config.end()) {
-    _k = config["k"];
-  } else { 
-    std::cerr << rang::style::bold << rang::fg::yellow
-              << "Warning: "
-              << rang::style::reset << rang::fg::reset
-              << "'k' not found in 'config'.\n";
-    ret = false;
+  ConfigErrors errors;
+
+  // Setting stiffness k
+  auto k_it = config.find("k");
+  if (k_it == config.end()) { 
+    errors.push_back( {ConfigErrorCode::MISSING_KEY, "k", std::nullopt} );
+  } else if (k_it->second <= 0.0) { 
+    errors.push_back( {ConfigErrorCode::INVALID_VALUE, "k", k_it->second} );
+  } else{ 
+    _k = k_it->second; 
   }
 
-  if(config.find("m") != config.end()) {
-    _m = config["m"];
-  } else { 
-    std::cerr << rang::style::bold << rang::fg::yellow
-              << "Warning: "
-              << rang::style::reset << rang::fg::reset
-              << "'m' not found in 'config'.\n";
-    ret = false;
+  // Setting mass m
+  auto m_it = config.find("m");
+  if (m_it == config.end()) { 
+    errors.push_back( {ConfigErrorCode::MISSING_KEY, "m", std::nullopt} );
+  } else if (m_it->second <= 0.0) { 
+    errors.push_back( {ConfigErrorCode::INVALID_VALUE, "m", m_it->second} );
+  } else{ 
+    _m = m_it->second; 
   }
 
-  return ret;
-  }
-
+  return errors;
+}

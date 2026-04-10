@@ -5,6 +5,27 @@
 #include <fstream>
 #include <map>
 
+// Error definition about model configuration
+enum class ConfigErrorCode {
+  NONE,
+  MISSING_KEY,
+  INVALID_VALUE,
+  OUT_OF_RANGE,
+  UNKNOWN_KEY,
+};
+
+// Error container about model configuration
+struct ConfigError {
+  ConfigErrorCode code = ConfigErrorCode::NONE; // setted by default
+  std::string key;
+  std::optional<double> value;
+};
+
+// Why a vector of ConfigError? Because there could be multiple errors in the
+// config file, and we want to report all of them to the user, instead of just
+// the first one. Go to /spring.hpp->set_config for an example of how to use it.
+using ConfigErrors = std::vector<ConfigError>;
+
 class Model 
 {
   public:
@@ -14,9 +35,9 @@ class Model
     Model( std::string name, size_t n_states, size_t n_inputs );
 
     // Parsing config files (key-value pairs)
-    bool load_config( std::string& );
+    void load_config( std::string& );
     // Saving config files (key-value pairs)
-    bool save_config( std::string& ) const;
+    void save_config( std::string& ) const;
     
     // Set the initial state of the model
     void set_x0( Vec initial_state );
@@ -37,7 +58,8 @@ class Model
 
     virtual Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) = 0;  // pure virtual function, it MUST be implemented by child classes
     
-    virtual bool set_config( std::map<std::string, double>& ) { return true; } // default implementation: it's not necessary to implement it in child classes, but it can be overridden if needed
+    virtual ConfigErrors set_config( const std::map<std::string, double>& ) 
+      { return {}; } // default implementation: it's not necessary to implement it in child classes, but it can be overridden if needed
     
     // Return the current config values as a map of key-value pairs. By
     // default, it returns an empty map, but it can be overridden by child
@@ -59,24 +81,3 @@ class Model
     Vec _states;
     double _t;
 };
-
-// miglioria: implementa un enum per ritornare l'errore specifico in set_config, anziche un bool (es: enum class ConfigError { NONE, INVALID_VALUE, MISSING_KEY, ... };)
-/*
-eunm class LoadConfigError {
-  NONE,
-  FILE_NOT_FOUND,
-  INVALID_FORMAT,
-  MISSING_KEY,
-  INVALID_VALUE
-};
-LoadConfigError err = LoadConfigError::NONE;
-
-// The main use of enum class is to provide a type-safe way to represent a set of related constants, such as error codes, states, or options. By using an enum class, you can avoid issues with implicit conversions and improve code readability. In the context of the load_config function, using an enum class for error handling allows you to clearly indicate the specific error that occurred during the loading process, making it easier for developers to understand and handle different error scenarios appropriately.
-
-vedi implementazione di pippo su github
-
-*/
-
-// std::optional usata per integrarte valore booleano e valore di una variabile... due cose in una
-
-// prova a implementare lambda functions
