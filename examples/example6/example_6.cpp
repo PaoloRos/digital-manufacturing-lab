@@ -26,31 +26,37 @@ int main(int argc, char** argv)
   std::cout << rang::bg::green << "Starting simulation..." << rang::bg::reset << std::endl;
 
   Spring spring("spring");
-  ForcedSpring fspring_1("constant_force");
-  ForcedSpring fspring_2("sinusoidal_force");
+  //ForcedSpring fspring_1("constant_force");
+  //ForcedSpring fspring_2("sinusoidal_force");
   
   try {
-
     spring.load_config(config_folder);
     //fspring_1.load_config(config_folder);
     //fspring_2.load_config(config_folder);
   } catch (std::runtime_error& e){
-
-    std::cerr << rang::bg::red << "Error loading config for spring: " << e.what() << rang::bg::reset << std::endl;
+    std::cerr << rang::style::bold << rang::fg::red << "Error"
+              << rang::style::reset << rang::fg::reset
+              << " loading config: " << e.what() << std::endl;
     return 1;
   }
 
-  spring.save_config(config_folder);
+  
+  if(!spring.save_config(config_folder)) {
+    std::cerr << rang::style::bold << rang::fg::yellow
+              << "Warning: "
+              << rang::style::reset << rang::fg::reset
+              << "could not save config for model '" << spring.get_name() << "'.\n";
+  }
   //fspring_1.save_config(config_folder);
   //fspring_2.save_config(config_folder);
 
   spring.start_log(out_folder);
-  fspring_1.start_log(out_folder);
-  fspring_2.start_log(out_folder);
+  //fspring_1.start_log(out_folder);
+  //fspring_2.start_log(out_folder);
 
   spring.set_x0({1.0, 0.0}); // initial position = 1.0, initial velocity = 0.0
-  fspring_1.set_x0({0.0, 0.0});
-  fspring_2.set_x0({0.0, 0.0});
+  //fspring_1.set_x0({0.0, 0.0});
+  //fspring_2.set_x0({0.0, 0.0});
 
   // Model simulation
   double tf = 20;
@@ -58,8 +64,8 @@ int main(int argc, char** argv)
   for(double t = 0.0; t < tf; t += dt) {
 
     spring.step(dt, {}); // no inputs
-    fspring_1.step(dt, {1.0});
-    fspring_2.step(dt, {1.0 + std::sin(t * 2 * M_PI * 10.0)});
+    //fspring_1.step(dt, {1.0});
+    //fspring_2.step(dt, {1.0 + std::sin(t * 2 * M_PI * 10.0)});
 
     //spring.csv_row(std::cout);
   }

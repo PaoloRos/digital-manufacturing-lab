@@ -3,11 +3,7 @@
 #include "types.hpp"
 
 #include <fstream>
-#include <string>
-#include <exception>
 #include <map>
-
-std::string trim(std::string str);
 
 class Model 
 {
@@ -18,9 +14,9 @@ class Model
     Model( std::string name, size_t n_states, size_t n_inputs );
 
     // Parsing config files (key-value pairs)
-    bool load_config( std::string path );
+    bool load_config( std::string& );
     // Saving config files (key-value pairs)
-    bool save_config( std::string path ) const;
+    bool save_config( std::string& ) const;
     
     // Set the initial state of the model
     void set_x0( Vec initial_state );
@@ -28,23 +24,31 @@ class Model
     // Integrate the model for one time step
     void step( double dt, Vec inputs );
 
-    bool start_log( std::string path );
-    void stop_log();
+    bool start_log( std::string& );
+    inline void stop_log() { _log_file.close(); }
     void csv_header( std::ostream& ) const;
     void csv_row( std::ostream& ) const;
 
+    inline std::string get_name() const { return _name; }
+
   protected:
+
     std::string _name; // name of the model
 
     virtual Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) = 0;  // pure virtual function, it MUST be implemented by child classes
     
-    virtual bool set_config( std::map<std::string, double> config ) { return true; } // default implementation: it's not necessary to implement it in child classes, but it can be overridden if needed
+    virtual bool set_config( std::map<std::string, double>& ) { return true; } // default implementation: it's not necessary to implement it in child classes, but it can be overridden if needed
     
-    virtual std::optional<
-    std::map<std::string, double>
-    > get_config() const { return {}; } // Return an empty map by default, but it can be overridden by child classes to return the current config values
+    // Return the current config values as a map of key-value pairs. By
+    // default, it returns an empty map, but it can be overridden by child
+    // classes to return the actual config values.
+    // std::optional is a an object that contains another object, allowing to return
+    // a boolean value whether the container is empty or not
+    virtual std::optional< std::map<std::string, double> > get_config() const 
+      { return std::nullopt; }
 
   private:
+
     // Implemented by model, but overridden by child classes.
     Vec compute_x_dot( double dt, Vec inputs, Vec states );
 
@@ -77,3 +81,5 @@ vedi implementazione di pippo su github
 */
 
 // std::optional usata per integrarte valore booleano e valore di una variabile... due cose in una
+
+// prova a implementare lambda functions

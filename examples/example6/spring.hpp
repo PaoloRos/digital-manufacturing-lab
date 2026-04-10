@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <map>
+#include <rang.hpp>
 
 class Spring : public Model
 {
@@ -29,11 +30,9 @@ class Spring : public Model
 
     Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) override;
 
-    bool set_config( std::map<std::string, double> config) override;
+    bool set_config( std::map<std::string, double>& ) override;
 
-    std::optional<
-    std::map<std::string, double>
-    > get_config() const override
+    std::optional< std::map<std::string, double> > get_config() const override
       { return std::map<std::string, double>{ {"k", _k}, {"m", _m} }; }
   
   private:
@@ -52,21 +51,27 @@ Vec Spring::compute_x_dot_impl(double dt, Vec inputs, Vec states)
   return x_dot;
 }
 
-bool Spring::set_config(std::map<std::string, double> config) 
+bool Spring::set_config(std::map<std::string, double>& config) 
 {
   bool ret = true;  // returned value
+  
   if(config.find("k") != config.end()) {
-
     _k = config["k"];
   } else { 
-    std::cerr << "Warning: 'k' not found in config.\n";
+    std::cerr << rang::style::bold << rang::fg::yellow
+              << "Warning: "
+              << rang::style::reset << rang::fg::reset
+              << "'k' not found in 'config'.\n";
     ret = false;
   }
-  if(config.find("m") != config.end()) {
 
+  if(config.find("m") != config.end()) {
     _m = config["m"];
   } else { 
-    std::cerr << "Warning: 'm' not found in config.\n";
+    std::cerr << rang::style::bold << rang::fg::yellow
+              << "Warning: "
+              << rang::style::reset << rang::fg::reset
+              << "'m' not found in 'config'.\n";
     ret = false;
   }
 
