@@ -60,9 +60,6 @@ class Model
     double _t;
 };
 
-// Miglioria: prova a fare il calcolo delal derivatya come una un membro const
-// Altra miglioria: metti riferimento in comput xdot, anziche fare la copia
-
 // miglioria: implementa un enum per ritornare l'errore specifico in set_config, anziche un bool (es: enum class ConfigError { NONE, INVALID_VALUE, MISSING_KEY, ... };)
 /*
 eunm class LoadConfigError {
