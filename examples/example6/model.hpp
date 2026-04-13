@@ -35,9 +35,9 @@ class Model
     Model( std::string name, size_t n_states, size_t n_inputs );
 
     // Parsing config files (key-value pairs)
-    void load_config( std::string& );
+    void load_config( std::string& path );
     // Saving config files (key-value pairs)
-    void save_config( std::string& ) const;
+    void save_config( std::string& path ) const;
     
     // Set the initial state of the model
     void set_x0( Vec initial_state );
@@ -45,10 +45,10 @@ class Model
     // Integrate the model for one time step
     void step( double dt, Vec inputs );
 
-    bool start_log( std::string& );
+    bool start_log( std::string& path );
     inline void stop_log() { _log_file.close(); }
-    void csv_header( std::ostream& ) const;
-    void csv_row( std::ostream& ) const;
+    void csv_header( std::ostream& os ) const;
+    void csv_row( std::ostream& os ) const;
 
     inline std::string get_name() const { return _name; }
 
@@ -56,9 +56,9 @@ class Model
 
     std::string _name; // name of the model
 
-    virtual Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) = 0;  // pure virtual function, it MUST be implemented by child classes
+    virtual Vec compute_x_dot_impl( double& dt, Vec& inputs, Vec& states ) = 0;  // pure virtual function, it MUST be implemented by child classes
     
-    virtual ConfigErrors set_config( const std::map<std::string, double>& ) 
+    virtual ConfigErrors set_config( const std::map<std::string, double>& config ) 
       { return {}; } // default implementation: it's not necessary to implement it in child classes, but it can be overridden if needed
     
     // Return the current config values as a map of key-value pairs. By
@@ -72,7 +72,7 @@ class Model
   private:
 
     // Implemented by model, but overridden by child classes.
-    Vec compute_x_dot( double dt, Vec inputs, Vec states );
+    Vec compute_x_dot( double& dt, Vec& inputs, Vec& states );
 
     size_t _n_states;
     size_t _n_inputs;

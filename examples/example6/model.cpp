@@ -133,7 +133,7 @@ void Model::step(double dt, Vec inputs) {
   csv_row(_log_file);
 }
 
-Vec Model::compute_x_dot(double dt, Vec inputs, Vec states) {
+Vec Model::compute_x_dot(double& dt, Vec& inputs, Vec& states) {
   
   if (dt <= 0) {
 

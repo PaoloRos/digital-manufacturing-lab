@@ -28,9 +28,9 @@ class Spring : public Model
 
   protected:
 
-    Vec compute_x_dot_impl( double dt, Vec inputs, Vec states ) override;
+    Vec compute_x_dot_impl( double& dt, Vec& inputs, Vec& states ) override;
 
-    ConfigErrors set_config( const std::map<std::string, double>& ) override;
+    ConfigErrors set_config( const std::map<std::string, double>& config ) override;
 
     std::optional< std::map<std::string, double> > get_config() const override
       { return std::map<std::string, double>{ {"k", _k}, {"m", _m} }; }
@@ -41,7 +41,7 @@ class Spring : public Model
 
 };
 
-Vec Spring::compute_x_dot_impl(double dt, Vec inputs, Vec states)
+Vec Spring::compute_x_dot_impl(double& dt, Vec& inputs, Vec& states)
 {
   Vec x_dot = states;
 
