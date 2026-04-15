@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(VERSION 3.5)
 set(VERSION "0.0.1")
 project(CNCpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -24,12 +25,9 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(MAIN_DIR ${SRC_DIR}/main)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_LIST_DIR}/usr CACHE PATH "Install path prefix" FORCE)
-
-include(CTest)
 
 message(STATUS "SRC_DIR: ${SRC_DIR}")
 message(STATUS "MAIN_DIR: ${MAIN_DIR}")
@@ -49,8 +47,9 @@ include(FetchContent)
 message(STATUS "Fetching dependencies...")
 
 FetchContent_Declare(json
-  URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG        HEAD
+  GIT_SHALLOW    TRUE
 )
 
 FetchContent_Declare(fmt
@@ -71,6 +70,11 @@ FetchContent_Declare(yaml-cpp
   GIT_TAG HEAD
 )
 
+#FetchContent_Declare(keystroker
+#  GIT_REPOSITORY https://github.com/pbosetti/keystroker.git
+#  GIT_SHALLOW    TRUE
+#  GIT_TAG HEAD
+#)
 
 set(DOCUMENTATION OFF CACHE BOOL "")
 set(INC_BRIDGE_SUPPORT OFF CACHE BOOL "")
@@ -86,7 +90,7 @@ FetchContent_Declare(mosquitto
   GIT_TAG v2.0.20
 )
 
-FetchContent_MakeAvailable(fmt rang json yaml-cpp mosquitto)
+FetchContent_MakeAvailable(fmt rang json yaml-cpp mosquitto) #keystroker
 
 message(STATUS "Dependencies fetched.")
 
@@ -95,6 +99,7 @@ include_directories(
   ${rang_SOURCE_DIR}/include
   ${json_SOURCE_DIR}/include
   ${yaml-cpp_SOURCE_DIR}/include
+  #${keystroker_SOURCE_DIR}/include
   ${mosquitto_SOURCE_DIR}/include
   ${mosquitto_SOURCE_DIR}/lib/cpp
   # /opt/homebrew/include
@@ -112,12 +117,12 @@ link_directories(
 #   \____\___/|_| |_|_| |_|\__, |\__,_|_|  \___|\__,_| |_| |_|_|\___||___/
 #                          |___/
 
-# configure_file(
-#   ${SRC_DIR}/defines.hpp.in
-#   ${SRC_DIR}/defines.hpp
-# )
+ #configure_file(
+ #  ${SRC_DIR}/defines.hpp.in
+ #  ${SRC_DIR}/defines.hpp
+ #)
 
-#dd_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
+a#dd_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -130,12 +135,6 @@ link_directories(
 file(GLOB SRC_FILES ${SRC_DIR}/*.cpp)
 file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 
-add_library(cncpp STATIC ${SRC_FILES})
-target_include_directories(cncpp PUBLIC ${SRC_DIR})
-target_link_libraries(cncpp PUBLIC fmt::fmt)
-
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
-
 
 #   ___           _        _ _
 #  |_ _|_ __  ___| |_ __ _| | |
@@ -143,6 +142,23 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
 #   | || | | \__ \ || (_| | | |
 #  |___|_| |_|___/\__\__,_|_|_|
 #
+
+# ---------------------------------------------------------
+# My executable
+# ---------------------------------------------------------
+
+# Create executable form your main file
+#add_executable(my_program src/main/main.cpp)
+#add_executable(my_test example/example1/test.cpp)
+
+# Link external libraries needed by the program
+#target_link_libraries(my_program PRIVATE fmt::fmt)
+#target_link_libraries(my_test PRIVATE fmt::fmt)
+
+# ---------------------------------------------------------
+
+# List of installable targets
+#set(TARGET_LIST my_program)
 
 install(TARGETS ${TARGET_LIST}
   BUNDLE DESTINATION bin
