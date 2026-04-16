@@ -57,6 +57,9 @@ public:
   data_t z(data_t v) { return (_z = v).value(); }
   
   std::vector<data_t> vec() const;
+
+  friend 
+  std::ostream& operator<<(std::ostream &os, Point const &p);
   
 private:
   opt_data_t _x = std::nullopt;
@@ -64,7 +67,7 @@ private:
   opt_data_t _z = std::nullopt;
 };
 
-
+std::ostream& operator<<(std::ostream &os, Point const &p);
 
 }; // namespace cncpp
 
