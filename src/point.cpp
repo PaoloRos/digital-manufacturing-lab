@@ -19,11 +19,11 @@ using namespace cncpp;
 using namespace fmt;
 using col_t = optional<fmt::color>;
 
-// STATIC DECLARATIONS
+// ====== STATIC DECLARATIONS ======
 
 static string coord_str(opt_data_t const &coord, col_t const &color = nullopt);
 
-// LYFECYCLE
+// ====== LIFECYCLE ======
 
 Point::Point(opt_data_t x, opt_data_t y, opt_data_t z) : _x(x), _y(y), _z(z) {}
 
@@ -45,7 +45,7 @@ void Point::reset()
   _z.reset();
 }
 
-// OPERATORS/OPERATIONS
+// ====== OPERATORS/OPERATIONS ======
 
 Point Point::delta(Point const &o) const 
 {
@@ -88,32 +88,27 @@ Point Point::operator+(Point const& o) const
   return Point(_x.value() + o._x.value(), _y.value() + o._y.value(), _z.value() + o._z.value());
 }
 
-// ACCESSORS
+// ====== ACCESSORS ======
 
 std::vector<data_t> Point::vec() const 
 {
-  if(!is_complete()) {
+  if(!is_complete())
     throw runtime_error("Cannot convert to vector: incomplete point!");
-  }
-  return {_x.value(), _y.value(), _z.value()};
+  
+    return {_x.value(), _y.value(), _z.value()};
 }
 
 std::ostream &cncpp::operator<<(std::ostream &os, Point const &p) 
 {
-  bool is_terminal = false;
 
-  if (os.rdbuf() == std::cout.rdbuf()) {
-    is_terminal = (isatty(STDOUT_FILENO) == 1);
-  } else if (os.rdbuf() == std::cerr.rdbuf() || os.rdbuf() == std::clog.rdbuf()) {
-    is_terminal = (isatty(STDERR_FILENO) == 1);
-  }
+  bool is_terminal = (&os == &std::cout && isatty(STDOUT_FILENO)) || (&os == &std::cerr && isatty(STDERR_FILENO));
 
   os << p.desc(is_terminal);  // colored only if is terminal
 
   return os;
 }
 
-// STATIC DEFINITIONS
+// ====== STATIC DEFINITIONS ======
 
 static string coord_str(opt_data_t const &coord, col_t const &color) 
 {
@@ -128,12 +123,10 @@ static string coord_str(opt_data_t const &coord, col_t const &color)
   return str;
 }
 
-// TESTS
+// ====== TESTS ======
 
 // In cpp only one main: if we want to write tests in the same file, we can use a preprocessor directive to include a main function only when a specific macro is defined (e.g., CNCPP_TEST_MAIN). This way, we can compile the file with tests when needed, and without tests otherwise.
 #ifdef CNCPP_TEST_MAIN
-
-
 
 int main() {
   Point p1(1.0,2.0,3.0);
@@ -147,20 +140,21 @@ int main() {
   Point p3 = p1 + p2; // p3 is the sum of p1 and p2
   cout << "p3 = p1 + p2: " << p3 << endl;
   cout << "Length of p3: " << p3.length() << endl;
-  cerr << "Delta p3 - p1: " << p3.delta(p1) << endl;
+  cerr << "[From the stderr] Delta p3 - p1: " << p3.delta(p1) << endl;
 
   return 0;
 }
 
 #endif // CNCPP_TEST_MAIN
 
-// ========= ANNOTATIONS ========
+/* ========= ANNOTATIONS ========
 
-// audio: la migliore maniera per salvare un file è leggerlo senza salvarlo:
-// it's better to read directly from output
-// but a lot of garbage (console formatting)
-// solve that problem
-//
+The best way to save a file is to read it without saving it: it's better to read directly from output, without saving it (and of course opening it). That is performed by digiting from the console the following command:
 
-// stderror: not in the buffer -> not redirected to the file, but directly to the console, so we can see it immediately without opening the file
-// stdoutput: redirected to the file, so we can save it and analyze it later without the garbage of the console formatting (in the buffer)
+    ./path/to/executable > output.txt 2> error.txt
+
+where '> output.txt' redirects the standard output to a file, and '2> error.txt' redirects the standard error to another file.
+
+However, when the stdoutput is saved into a file, it will contain a lot of garbage (due to console formatting), so it's needed to solve that problem by writing an appropriate output stream funcion. [see operator<<() function]
+
+*/

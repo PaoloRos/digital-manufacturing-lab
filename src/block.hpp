@@ -1,9 +1,15 @@
-// Block of general functionality, that can be reused across the application and together.
-
 /*
-Block class
+ ____  _            _           _               
+| __ )| | ___   ___| | __   ___| | __ _ ___ ___ 
+|  _ \| |/ _ \ / __| |/ /  / __| |/ _` / __/ __|
+| |_) | | (_) | (__|   <  | (__| | (_| \__ \__ \
+|____/|_|\___/ \___|_|\_\  \___|_|\__,_|___/___/
+         
 
 Implements a G-code block, which is a a collection of G-code commands that are executed together. A block can contain multiple commands, and each command can have multiple parameters.
+
+Author_ Paolo Rossi
+Date: 2026-04-16
 */
 
 #pragma once
@@ -17,41 +23,44 @@ Implements a G-code block, which is a a collection of G-code commands that are e
 namespace cncpp {
 
 // Machine will define at least: max_acc, max_deacc and time step dt
+class Machine { };
 
-class Machine 
-{
-
-};
-
+// Block class represents a single block of G-code
+// It's handy define it as a enum class, because in G-Code the commands are: G00->rapid, G01->line, G02->clockwise arc, G03->counterclockwise arc, etc...
 class Block
 {
 public:
   
+  // Type of block motion
   enum class BlockType {
-    RAPID = 0,            // force the index of the enum (to avoid differnt compiler behavior) and handy to read
-    LINE,
+    RAPID = 0,            // non-cutting rapid positioning
+    LINE,                 // linear motion
     CWA,                  // clockwise arc
     CCWA,                 // counterclockwise arc
     NO_MOTION
   };
 
+  // Motion profile: the main purpose of this CNC software is to calculate the motion profile in order to control the CNC machine.
   struct Profile {
-    data_t a, d;  // acceleration and deceleration
-    data_t f, l;
-    data_t fs, fe;
-    data_t dt_1, dt_m, dt_2;
-    data_t dt;  // duration
-    data_t current_acc;
-    data_t lambda(data_t t, data_t &s); // return a value in range [0,1] and the current speed
+    data_t a, d;                        // acceleration and deceleration
+    data_t f, l;                        // feedrate and length of the block
+    data_t fs, fe;                      // starting and final feedrate
+    data_t dt_1, dt_m, dt_2;            // duration of the acceleration, cruise speed and deceleration phases
+    data_t dt;                          // total duration
+    data_t current_acc;                 // current acceleration along an arc
+    data_t lambda(data_t t, data_t &s); // Motion interpolation: function lambda(t) = integral of velocity profile
+                                        // It takes the time and the velocity as input, and return the value of lambda in range [0,1] and the current speed
   };
-  // LYFECYCLE
+
+  // ====== LIFECYCLE ==================================================================
+  
   Block(std::string line);
-  Block(std::string line, Block &prev); // constructor that takes the previous block as argument, to compute the modal coordinates and other parameters based on the previous block
+  Block(std::string line, Block &prev); // constructor that takes the previous block as argument
   ~Block();
-  std::string desc(bool colored = true) const; // return a description of the block, with optional colored output (using fmt library)
+  std::string desc(bool colored = true) const; // return a description of the block
   Block &operator=(Block &o); // 'this' = 'other' as reference
 
-  // OPERATIONS/OPERATORS
+  // ====== OPERATIONS/OPERATORS ======================================================
 
   Block &parse(Machine const *m); // parse the line of G-code and extract the parameters
   data_t lambda(data_t time, data_t &speed);
@@ -59,7 +68,8 @@ public:
   Point interpolate(data_t time, data_t &lambda, data_t &speed);  // in one shot: lamda and speed returned
   void walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> func);  // walk along the block, in steps of dt, executing lamdas function at every step along the trajectory: flessibilità di eseguire una funzione mentre avviene l'interpolazione
 
-  // ACCESSORS
+  // ====== ACCESSORS ==================================================================
+
   std::string line() const { return _line; }
   size_t n() const { return _n; }
   data_t dt() const { return _profile.dt; } // fake accessor
@@ -69,47 +79,46 @@ public:
   data_t arc_feedrate() const { return _arc_feedrate; }
   data_t spindle() const { return _spindle; }
   data_t length() const { return _length; }
-  const Point &target() const { return _target; }
-  const Point &center() const { return _center; }
-  const Point &delta() const { return _delta; }
+  Point const &target() const { return _target; }
+  Point const &center() const { return _center; }
+  Point const &delta() const { return _delta; }
   size_t m() const { return _m; }
-  const Profile &profile() const { return _profile; }
+  Profile const &profile() const { return _profile; }
   bool parsed() const { return _parsed; }
 
-  // public because need to be accessible
   Block *prev = nullptr;
   Block *next = nullptr;
-  
 
 private:
-  std::string _line;                        // original line of G-code, eg "N01 G00 X100"
-  size_t _n = 0;                            // block number
-  // Geometry
-  Point _target = Point();
+// --- Block ID ---
+std::string _line;                        // original line of G-code, eg "N01 G00 X100"
+size_t _n = 0;                            // block number
+bool _parsed = false;                     // flag whther correctly parsed or not
+  // --- Geometry ---
+  Point _target = Point();                  // block destination, eg X100 Y100 Z0
   Point _center = Point();                  // to represent arc
-  Point _delta = Point();                   // tree projection
-  data_t _length = 0.0;
-  data_t _i = 0.0, _j = 0.0, _r = 0.0;      // arc parameters
-  data_t _theta_0 = 0.0, _dtheta = 0.0;     // arc angles
-  // Machining
+  Point _delta = Point();                   // three projection (maybe the three components of the displacement vector)
+  data_t _length = 0.0;                     // length of the displacement vector 
+  data_t _i = 0.0, _j = 0.0, _r = 0.0;      // arc parameters: I and J for center, R for radius
+  data_t _theta_0 = 0.0, _dtheta = 0.0;     // arc angles: initial and included angle
+  // --- Machining ---
   data_t _feedrate = 0.0;
-  data_t _arc_feedrate = 0.0;               // feedrate along the arc
-  data_t _spindle = 0.0;                    // spindle rate
-  data_t _acc = 0.0;                        // actual accelaration
+  data_t _arc_feedrate = 0.0;               // arc feedrate
+  data_t _spindle = 0.0;                    // rotational spindle rate
+  data_t _acc = 0.0;                        // actual acceleration
   size_t _m = 0.0;                          // M command argument, eg M03 -> _m = 3.0
-  size_t _tool = 0.0;                      // tool number
+  size_t _tool = 0.0;                       // tool number
   BlockType _type = BlockType::NO_MOTION;   // type of motion, eg rapid, line, arc, etc.
   Profile _profile;                         // motion profile, to be computed based on the block type and parameters
-  Machine const *_machine = nullptr;        // pointer to the machine, without changine the machine frome the Block!
-  bool _parsed = false;                    // flag to indicate if the block has been parsed correctly, to avoid copying unparsed blocks in the assignment operator
+  Machine const *_machine = nullptr;        // pointer to the machine, without changing the Machine from the Block!
 
-bool parse_token(string const &token);
+  bool parse_token(std::string const &token);
 
 };  // class Block
 
+// Temporary
+data_t Block::Profile::lambda(data_t t, data_t &s) { return 0.0; }
 
 } // namespace cncpp
 
 // ========= ANNOTATIONS ========
-
-// in sructs all members are public by default: no underscore at the beginning of the name, to avoid confusion with private members of classes, that are usually prefixed with an underscore. Moreover, since the struct is used as a simple data container, it doesn't need the encapsulation provided by private members and accessors, so we can keep all members public for simplicity and readability.

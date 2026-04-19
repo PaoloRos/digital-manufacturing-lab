@@ -1,4 +1,11 @@
 /*
+ ____       _       _          _               
+|  _ \ ___ (_)_ __ | |_    ___| | __ _ ___ ___ 
+| |_) / _ \| | '_ \| __|  / __| |/ _` / __/ __|
+|  __/ (_) | | | | | |_  | (__| | (_| \__ \__ \
+|_|   \___/|_|_| |_|\__|  \___|_|\__,_|___/___/
+                           
+
 3D Point representation: its coordinates and useful methods to manipulate it.
 
 Author: Paolo Rossi
@@ -20,7 +27,7 @@ class Point {
   
 public:
 
-  // LIFECYCLE (creating/destroying objects)
+  // ====== LIFECYCLE (creating/destroying objects) =====
 
   // Point constructor: it can be called with 0, 1, 2, or 3 arguments, thanks to default values (otherwise would be redeundant defining an argument as std::nullopt, since the attributes are already initialized with nullopt)
   Point(opt_data_t x = std::nullopt, opt_data_t y = std::nullopt, opt_data_t z = std::nullopt);
@@ -31,7 +38,7 @@ public:
   // Reset the point to an empty state (all coordinates undefined)
   void reset();
 
-  // OPERATORS/OPERATIONS
+  // ====== OPERATORS/OPERATIONS ======
 
   // Compute the distance between two points (the difference between their coordinates)
   Point delta(Point const &o) const;
@@ -46,7 +53,7 @@ public:
   // Check if the point is complete (all coordinates defined)
   bool is_complete() const { return _x && _y && _z; }
 
-  // ACCESSORS
+  // ====== ACCESSORS ======
 
   data_t x() const { return _x.value(); }  // Copilot suggest to use value_or(0.0) -> perché? Se uso value_or(0.0) non riesco a distinguere tra un punto con x=0.0 e un punto con x non definito, mentre con value() se x non è definito viene lanciata un'eccezione std::bad_optional_access, che è più chiara per il debug: CHIEDI AL PROF!
   data_t y() const { return _y.value(); }
@@ -56,6 +63,7 @@ public:
   data_t y(data_t v) { return (_y = v).value(); }
   data_t z(data_t v) { return (_z = v).value(); }
   
+  // Convert the point to a vector of data_t
   std::vector<data_t> vec() const;
 
   friend 

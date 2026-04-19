@@ -1,16 +1,10 @@
 /*
-██████╗ ██╗      ██████╗  ██████╗██╗  ██╗
-██╔══██╗██║     ██╔═══██╗██╔════╝██║ ██╔╝
-██████╔╝██║     ██║   ██║██║     █████╔╝ 
-██╔══██╗██║     ██║   ██║██║     ██╔═██╗ 
-██████╔╝███████╗╚██████╔╝╚██████╗██║  ██╗
-╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝
-                                         
+Block class implementation.
 
-block
+Implements a G-code block, which is a a collection of G-code commands that are executed together. A block can contain multiple commands, and each command can have multiple parameters.
 
-Block class implementation
-
+Author: Paolo Rossi
+Date: 2026-04-16
 */
 
 #include "block.hpp"
@@ -18,18 +12,27 @@ Block class implementation
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <fmt/color.h>
 
 using namespace std;
 using namespace cncpp;
 
-// LIFECYCLE
-Block::Block(string line) : _line(line), _n(0) {}
+// ===== LIFECYCLE ==================================================================
+
+Block::Block(string line) : _line(line), _n(0) {
+  cerr << fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]")
+       << " Block " << _line << " created" << endl;
+}
 
 Block::Block(string line, Block &prev) : Block(line) { *this = prev; }
 
-Block::~Block() { cerr << "[MESSAGE] Block " << _line << " destroyed" << endl; }
+Block::~Block()
+{
+  cerr << fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]")
+       << " Block " << _line << " destroyed" << endl;
+}
 
-string Block::desc(bool colored = true) const
+string Block::desc(bool colored) const
 {
 
 }
@@ -37,21 +40,21 @@ string Block::desc(bool colored = true) const
 Block &Block::operator=(Block &o)
 {
   if ( !o._parsed )
-    throw runtime_error("Cannot copy a Block that is not correctly parsed");
+    throw runtime_error("Cannot copy a Block that is not correctly parsed!");
 
   // inherite only modal coordinates and required parameters
   _tool = o._tool;
   _feedrate = o._feedrate;
   _spindle = o._spindle;
-  _n = o._n + 1; // increment block number
-  _target.reset(); // reset target, to be updated by parse() if specified in the line
+  _n = o._n + 1;            // increment block number
+  _target.reset();          // reset target, to be updated by parse() if specified in the line
   prev = &o;
   o.next = this;
 
   return *this;
 }
 
-// OPERATIONS/OPERATORS
+// ====== OPERATIONS/OPERATORS ======================================================
 
 Block &Block::parse(Machine const *m)
 {
@@ -138,12 +141,12 @@ void Block::walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> fun
 
 }
 
-// ACCESSORS
+// ====== ACCESSORS ==================================================================
 
 
 
 
-// PRIVATE METHODS
+// ====== PRIVATE METHODS ============================================================
 
 bool Block::parse_token(string const &token)
 {
@@ -152,3 +155,19 @@ bool Block::parse_token(string const &token)
 
   return res;
 }
+
+// ====== TESTS ==================================================================
+
+#ifdef BLOCK_TEST_MAIN
+
+int main() {
+  Block b1("G1 X10 Y20 Z30 F1000");
+
+  cerr << (b1.parsed() ? "Block parsed" : "Block not parsed") << endl;
+
+  Block b2("G1 X20 Y30 Z40 F1500", b1); // b2 inherits modal coords from b1
+
+  return 0;
+}
+
+#endif // BLOCK_TEST_MAIN

@@ -117,7 +117,7 @@ link_directories(
 #   ${SRC_DIR}/defines.hpp
 # )
 
-#dd_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
+#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -140,6 +140,12 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
 add_executable(point_test ${SRC_DIR}/point.cpp)
 target_compile_definitions(point_test PRIVATE CNCPP_TEST_MAIN)
 target_link_libraries(point_test PRIVATE cncpp fmt::fmt)
+
+# Block test
+
+add_executable(block_test ${SRC_DIR}/block.cpp)
+target_compile_definitions(block_test PRIVATE BLOCK_TEST_MAIN)
+target_link_libraries(block_test PRIVATE cncpp fmt::fmt)
 
 
 #   ___           _        _ _
