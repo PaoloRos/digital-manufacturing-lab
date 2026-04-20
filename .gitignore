@@ -9,7 +9,6 @@ cmake_install.cmake
 *.tcl
 
 # Project-specific
-src/defines.hpp
 usr/
 *.dgraph
 /*.csv

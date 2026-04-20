@@ -48,6 +48,7 @@ Block &Block::operator=(Block &o)
   _spindle = o._spindle;
   _n = o._n + 1;            // increment block number
   _target.reset();          // reset target, to be updated by parse() if specified in the line
+  // Linked list management
   prev = &o;
   o.next = this;
 
