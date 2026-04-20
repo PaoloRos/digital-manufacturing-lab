@@ -142,7 +142,6 @@ target_compile_definitions(point_test PRIVATE CNCPP_TEST_MAIN)
 target_link_libraries(point_test PRIVATE cncpp fmt::fmt)
 
 # Block test
-
 add_executable(block_test ${SRC_DIR}/block.cpp)
 target_compile_definitions(block_test PRIVATE BLOCK_TEST_MAIN)
 target_link_libraries(block_test PRIVATE cncpp fmt::fmt)

@@ -52,23 +52,23 @@ public:
                                         // It takes the time and the velocity as input, and return the value of lambda in range [0,1] and the current speed
   };
 
-  // ====== LIFECYCLE ==================================================================
+  // LIFECYCLE =================================================================
   
   Block(std::string line);
-  Block(std::string line, Block &prev); // constructor that takes the previous block as argument
+  Block(std::string line, Block &prev); // Constructor that takes the previous block as argument
   ~Block();
-  std::string desc(bool colored = true) const; // return a description of the block
+  std::string desc(bool colored = true) const; // Return a description of the block
   Block &operator=(Block &o); // 'this' = 'other' as reference
 
-  // ====== OPERATIONS/OPERATORS ======================================================
+  // OPERATIONS/OPERATORS ======================================================
 
-  Block &parse(Machine const *m); // parse the line of G-code and extract the parameters
+  Block &parse(Machine const *m);                                 // Parse the line of G-code and extract the parameters
   data_t lambda(data_t time, data_t &speed);
   Point interpolate(data_t lambda);
-  Point interpolate(data_t time, data_t &lambda, data_t &speed);  // in one shot: lamda and speed returned
+  Point interpolate(data_t time, data_t lambda, data_t &speed);   //[NOTE] I removed the reference to lambda in the arguments, since it can be calculated inside the function, avoiding the risk of out of scope reference.
   void walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> func);  // walk along the block, in steps of dt, executing lamdas function at every step along the trajectory: flessibilità di eseguire una funzione mentre avviene l'interpolazione
 
-  // ====== ACCESSORS ==================================================================
+  // ACCESSORS =================================================================
 
   std::string line() const { return _line; }
   size_t n() const { return _n; }
@@ -85,6 +85,11 @@ public:
   size_t m() const { return _m; }
   Profile const &profile() const { return _profile; }
   bool parsed() const { return _parsed; }
+
+  // My accessors
+  data_t r() const { return _r; }
+  data_t theta_0() const { return _theta_0; }
+  data_t dtheta() const { return _dtheta; }
 
   Block *prev = nullptr;
   Block *next = nullptr;
@@ -121,4 +126,4 @@ data_t Block::Profile::lambda(data_t t, data_t &s) { return 0.0; }
 
 } // namespace cncpp
 
-// ========= ANNOTATIONS ========
+// ANNOTATIONS =================================================================

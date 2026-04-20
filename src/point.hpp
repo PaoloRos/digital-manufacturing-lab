@@ -17,6 +17,8 @@ Created: 2024-04-14
 #include "defines.hpp"
 
 #include <vector>
+#include <string>
+#include <ostream>
 
 // Namespace is a way to avoid name collisions between different libraries, typically a namespace is NOT indented (the only case of NO indentation)
 
