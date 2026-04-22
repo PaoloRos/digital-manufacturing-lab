@@ -13,6 +13,9 @@ Created: 2026-04-14
 #pragma once  // needs modern C++ (since C++11)
 
 #include <optional>
+#include <iostream>
+#include <string>
+#include <vector>
 
 // Semantic versioning: main.minor.patch, where patch is for bug fixes, minor
 // for new features, and main for breaking changes. See https://semver.org/ for
@@ -28,3 +31,30 @@ using data_t = double;
 // A point in ISO Gcode may have a coordinate or not: so use an optional type
 using opt_data_t = std::optional<data_t>;
 using opt_int_t = std::optional<int>;
+
+namespace cncpp {
+// General purpose class
+class Object {
+  public:
+    virtual std::string desc(bool colored = true) const = 0;
+
+    /**
+     * @brief Stream output operator.
+     * @param os Output stream.
+     * @param p Point to print.
+     * @return Output stream reference.
+     */
+    friend 
+    std::ostream& operator<<(std::ostream &os, Object const &p);
+
+};
+
+/**
+ * @brief Stream output operator for Point.
+ * @param os Output stream.
+ * @param p Point to print.
+ * @return Output stream reference.
+ */
+std::ostream& operator<<(std::ostream &os, Object const &p);
+
+} // namespace cncpp

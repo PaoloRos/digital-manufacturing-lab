@@ -24,60 +24,138 @@ Created: 2024-04-14
 
 namespace cncpp {
 
-// 3D spatial Point class
-class Point {
+/**
+ * @brief 3D spatial point with optional coordinates.
+ *
+ * A Point can store each coordinate as defined or undefined. This is useful
+ * for modal CNC semantics, where missing values can be inherited from previous
+ * instructions.
+ */
+class Point : public Object {
   
 public:
 
   // ====== LIFECYCLE (creating/destroying objects) =====
 
-  // Point constructor: it can be called with 0, 1, 2, or 3 arguments, thanks to default values (otherwise would be redeundant defining an argument as std::nullopt, since the attributes are already initialized with nullopt)
+  /**
+   * @brief Construct a point with optional coordinates.
+   * @param x X coordinate. If std::nullopt, x is undefined.
+   * @param y Y coordinate. If std::nullopt, y is undefined.
+   * @param z Z coordinate. If std::nullopt, z is undefined.
+   */
   Point(opt_data_t x = std::nullopt, opt_data_t y = std::nullopt, opt_data_t z = std::nullopt);
 
-  // Print a description of the point, with optional colored output (using fmt library)
-  std::string desc(bool colored = true) const;
+  /**
+   * @brief Build a string description of the point.
+   * @param colored Enable ANSI colored output when true.
+   * @return Human-readable point description.
+   */
+  std::string desc(bool colored = true) const override;
   
-  // Reset the point to an empty state (all coordinates undefined)
+  /**
+   * @brief Reset all coordinates to undefined.
+   */
   void reset();
 
   // ====== OPERATORS/OPERATIONS ======
 
-  // Compute the distance between two points (the difference between their coordinates)
+  /**
+   * @brief Compute coordinate-wise difference with another point.
+   * @param o Other point.
+   * @return Point equal to this - o for each coordinate.
+   */
   Point delta(Point const &o) const;
-  // Compute the length of a point (the distance from the origin)
+  /**
+   * @brief Compute Euclidean norm from the origin.
+   * @return Point length.
+   */
   data_t length() const;
-  // Compute the modal coordinates between two points (see the notes on Notability): if 'this' (new instruction) has an empty coordinate, it'll be updated with the value of 'other' (previous instruction)
+  /**
+   * @brief Apply modal completion using another point.
+   * @param o Source point for missing coordinates.
+   *
+   * Undefined coordinates in this point are filled with values from o.
+   */
   void modal(Point const &o);
 
+  /**
+   * @brief Copy assignment operator.
+   * @param o Source point.
+   * @return Reference to this point.
+   */
   Point& operator=(Point const &o); // 'this' = 'other' as reference
+
+  /**
+   * @brief Coordinate-wise point sum.
+   * @param o Other point.
+   * @return New point equal to this + o.
+   */
   Point operator+(Point const& o) const; // p3 = p1 + p2 as value
 
-  // Check if the point is complete (all coordinates defined)
+  /**
+   * @brief Check whether all coordinates are defined.
+   * @return True if x, y and z are all defined.
+   */
   bool is_complete() const { return _x && _y && _z; }
 
   // ====== ACCESSORS ======
 
-  data_t x() const { return _x.value(); }  // Copilot suggest to use value_or(0.0) -> perché? Se uso value_or(0.0) non riesco a distinguere tra un punto con x=0.0 e un punto con x non definito, mentre con value() se x non è definito viene lanciata un'eccezione std::bad_optional_access, che è più chiara per il debug: CHIEDI AL PROF!
+  /**
+   * @brief Get x coordinate.
+   * @return X coordinate value.
+   * @throws std::bad_optional_access If x is undefined.
+   */
+  data_t x() const { return _x.value(); }
+
+  /**
+   * @brief Get y coordinate.
+   * @return Y coordinate value.
+   * @throws std::bad_optional_access If y is undefined.
+   */
   data_t y() const { return _y.value(); }
+
+  /**
+   * @brief Get z coordinate.
+   * @return Z coordinate value.
+   * @throws std::bad_optional_access If z is undefined.
+   */
   data_t z() const { return _z.value(); }
   
+  /**
+   * @brief Set x coordinate.
+   * @param v New x value.
+   * @return Assigned x value.
+   */
   data_t x(data_t v) { return (_x = v).value(); }
+
+  /**
+   * @brief Set y coordinate.
+   * @param v New y value.
+   * @return Assigned y value.
+   */
   data_t y(data_t v) { return (_y = v).value(); }
+
+  /**
+   * @brief Set z coordinate.
+   * @param v New z value.
+   * @return Assigned z value.
+   */
   data_t z(data_t v) { return (_z = v).value(); }
   
-  // Convert the point to a vector of data_t
+  /**
+   * @brief Convert point coordinates to vector form.
+   * @return Vector containing point coordinates.
+   */
   std::vector<data_t> vec() const;
-
-  friend 
-  std::ostream& operator<<(std::ostream &os, Point const &p);
   
 private:
+  // X coordinate (optional).
   opt_data_t _x = std::nullopt;
+  // Y coordinate (optional).
   opt_data_t _y = std::nullopt;
+  // Z coordinate (optional).
   opt_data_t _z = std::nullopt;
 };
-
-std::ostream& operator<<(std::ostream &os, Point const &p);
 
 }; // namespace cncpp
 

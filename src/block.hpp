@@ -23,11 +23,17 @@ Date: 2026-04-16
 namespace cncpp {
 
 // Machine will define at least: max_acc, max_deacc and time step dt
-class Machine { };
+class Machine { 
+public:
+  Point zero() const { return Point(0.0, 0.0, 0.0); } // Reference point of the machine
+                                                      // in Block _machine = const ptr -> zero must be a const method, otherwise it cannot be called from a const ptr
+  data_t tq() const { return 0.01; }                  // Time step of the machine
+  data_t A() const { return 1000.0; }                   // Maximum acceleration of the machine
+};
 
 // Block class represents a single block of G-code
 // It's handy define it as a enum class, because in G-Code the commands are: G00->rapid, G01->line, G02->clockwise arc, G03->counterclockwise arc, etc...
-class Block
+class Block : public Object
 {
 public:
   
@@ -48,7 +54,7 @@ public:
     data_t dt_1, dt_m, dt_2;            // duration of the acceleration, cruise speed and deceleration phases
     data_t dt;                          // total duration
     data_t current_acc;                 // current acceleration along an arc
-    data_t lambda(data_t t, data_t &s); // Motion interpolation: function lambda(t) = integral of velocity profile
+    data_t lambda(data_t t, data_t &s); // Motion interpolation: function lambda(t) = integral of velocity profile. Value in range [0,1]
                                         // It takes the time and the velocity as input, and return the value of lambda in range [0,1] and the current speed
   };
 
@@ -57,7 +63,7 @@ public:
   Block(std::string line);
   Block(std::string line, Block &prev); // Constructor that takes the previous block as argument
   ~Block();
-  std::string desc(bool colored = true) const; // Return a description of the block
+  std::string desc(bool colored = true) const override; // Return a description of the block
   Block &operator=(Block &o); // 'this' = 'other' as reference
 
   // OPERATIONS/OPERATORS ======================================================
@@ -65,8 +71,9 @@ public:
   Block &parse(Machine const *m);                                 // Parse the line of G-code and extract the parameters
   data_t lambda(data_t time, data_t &speed);
   Point interpolate(data_t lambda);
-  Point interpolate(data_t time, data_t lambda, data_t &speed);   //[NOTE] I removed the reference to lambda in the arguments, since it can be calculated inside the function, avoiding the risk of out of scope reference.
-  void walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> func);  // walk along the block, in steps of dt, executing lamdas function at every step along the trajectory: flessibilità di eseguire una funzione mentre avviene l'interpolazione
+  Point interpolate(data_t time, data_t &lambda, data_t &speed);   //[NOTE] I removed the reference to lambda in the arguments, since it can be calculated inside the function, avoiding the risk of out of scope reference.
+
+  void walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> func);  // Walk along the block, in steps of dt, executing lamdas function at every step along the trajectory: flessibilità di eseguire una funzione mentre avviene l'interpolazione
 
   // ACCESSORS =================================================================
 
@@ -118,12 +125,29 @@ bool _parsed = false;                     // flag whther correctly parsed or not
   Machine const *_machine = nullptr;        // pointer to the machine, without changing the Machine from the Block!
 
   bool parse_token(std::string const &token);
+  Point start_point();
+  void compute();
+  void calc_arc();
 
 };  // class Block
 
 // Temporary
+
+
 data_t Block::Profile::lambda(data_t t, data_t &s) { return 0.0; }
 
 } // namespace cncpp
 
 // ANNOTATIONS =================================================================
+
+/*
+Very first G-code command:
+G00 X100 Y100 Z0: defining the first position of the tool --> positioning
+
+in principle, the starting point is unknown (maybe the human operator has moved the tool...)
+
+How to do? Ask to the machine (SW) where's the tool, in order to do the correct positioning. --> Implement in the Machine class
+
+
+
+*/
