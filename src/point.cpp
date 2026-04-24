@@ -98,16 +98,6 @@ std::vector<data_t> Point::vec() const
     return {_x.value(), _y.value(), _z.value()};
 }
 
-std::ostream &cncpp::operator<<(std::ostream &os, Point const &p) 
-{
-
-  bool is_terminal = (&os == &std::cout && isatty(STDOUT_FILENO)) || (&os == &std::cerr && isatty(STDERR_FILENO));
-
-  os << p.desc(is_terminal);  // colored only if is terminal
-
-  return os;
-}
-
 // ====== STATIC DEFINITIONS ======
 
 static string coord_str(opt_data_t const &coord, col_t const &color) 
@@ -126,7 +116,7 @@ static string coord_str(opt_data_t const &coord, col_t const &color)
 // ====== TESTS ======
 
 // In cpp only one main: if we want to write tests in the same file, we can use a preprocessor directive to include a main function only when a specific macro is defined (e.g., CNCPP_TEST_MAIN). This way, we can compile the file with tests when needed, and without tests otherwise.
-#ifdef CNCPP_TEST_MAIN
+#ifdef CNCPP_POINT_TEST_MAIN
 
 int main() {
   Point p1(1.0,2.0,3.0);
@@ -145,7 +135,7 @@ int main() {
   return 0;
 }
 
-#endif // CNCPP_TEST_MAIN
+#endif // CNCPP_POINT_TEST_MAIN
 
 /* ========= ANNOTATIONS ========
 

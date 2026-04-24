@@ -126,32 +126,38 @@ link_directories(
 # |____/ \___/ \___|\__,_|_| |_| |_|\___|_| |_|\__\__,_|\__|_|\___/|_| |_|
 #                     
 
-#find_package(Doxygen)
-#
-#if(DOXYGEN_FOUND)
-#  set(DOXYGEN_PROJECT_NAME "${PROJECT_NAME}")
-#  set(DOXYGEN_PROJECT_VERSION "${PROJECT_VERSION}")
-#  set(DOXYGEN_INPUT_DIR "${SRC_DIR}")
-#  set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_LIST_DIR}/doc")
-#  set(DOXYGEN_FILE_PATTERNS "*.hpp")
-#  set(DOXYGEN_RECURSIVE YES)
-#
-#  configure_file(
-#    ${CMAKE_CURRENT_LIST_DIR}/doc/Doxyfile.in
-#    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-#    @ONLY
-#  )
-#
-#  add_custom_target(doc
-#    COMMAND ${CMAKE_COMMAND} -E make_directory ${DOXYGEN_OUTPUT_DIR}
-#    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-#    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-#    COMMENT "Generating API documentation with Doxygen"
-#    VERBATIM
-#  )
-#else()
-#  message(STATUS "Doxygen not found: 'doc' target will not be available")
-#endif()
+# Now the Doxygen documentation and Doxyfile are placed in the build directory, 
+# so they won't clutter the source one. However, it is ignored by git, therefore
+# it won't be added to the repository: so at the and this configuration MUST be 
+#changed.
+  
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+  set(DOXYGEN_PROJECT_NAME "${PROJECT_NAME}")
+  set(DOXYGEN_PROJECT_NUMBER "${PROJECT_VERSION}")
+  set(DOXYGEN_INPUT "${SRC_DIR}")
+  set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doc")
+  set(DOXYGEN_OUTPUT_DIR "${DOXYGEN_OUTPUT_DIRECTORY}")
+  set(DOXYGEN_FILE_PATTERNS "*.hpp")
+  set(DOXYGEN_RECURSIVE YES)
+
+  configure_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/CMakeDoxyfile.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    @ONLY
+  )
+
+  add_custom_target(doc
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DOXYGEN_OUTPUT_DIR}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+    COMMENT "Generating API documentation with Doxygen"
+    VERBATIM
+  )
+else()
+  message(STATUS "Doxygen not found: 'doc' target will not be available")
+endif()
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -168,16 +174,18 @@ add_library(cncpp STATIC ${SRC_FILES})
 target_include_directories(cncpp PUBLIC ${SRC_DIR})
 target_link_libraries(cncpp PUBLIC fmt::fmt)
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
+if(BUILD_TESTING)
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
+endif()
 
-# Configure test
+# Point test
 add_executable(point_test ${SRC_DIR}/point.cpp)
-target_compile_definitions(point_test PRIVATE CNCPP_TEST_MAIN)
+target_compile_definitions(point_test PRIVATE CNCPP_POINT_TEST_MAIN)
 target_link_libraries(point_test PRIVATE cncpp fmt::fmt)
 
 # Block test
 add_executable(block_test ${SRC_DIR}/block.cpp)
-target_compile_definitions(block_test PRIVATE BLOCK_TEST_MAIN)
+target_compile_definitions(block_test PRIVATE CNCPP_BLOCK_TEST_MAIN)
 target_link_libraries(block_test PRIVATE cncpp fmt::fmt)
 
 

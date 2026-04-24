@@ -149,11 +149,11 @@ public:
   std::vector<data_t> vec() const;
   
 private:
-  // X coordinate (optional).
+  /** @brief Optional X coordinate. */
   opt_data_t _x = std::nullopt;
-  // Y coordinate (optional).
+  /** @brief Optional Y coordinate. */
   opt_data_t _y = std::nullopt;
-  // Z coordinate (optional).
+  /** @brief Optional Z coordinate. */
   opt_data_t _z = std::nullopt;
 };
 
