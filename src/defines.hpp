@@ -14,26 +14,87 @@ Created: 2026-04-14
 
 #include <optional>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <unistd.h>
 
-// Semantic versioning: main.minor.patch, where patch is for bug fixes, minor
-// for new features, and main for breaking changes. See https://semver.org/ for
-// more details.
+#include <fmt/color.h>
+#include <fmt/format.h>
+
+/**
+ * @def CNCPP_VERSION_
+ * @brief Project semantic version in main.minor.patch format.
+ *
+ * Patch is for bug fixes, minor for new features, and main for breaking
+ * changes. See https://semver.org/ for details.
+ */
 #define CNCPP_VERSION_ "0.1.0"
 
-// Number of digits reserved for printing numbers
+/**
+ * @def CNCPP_NUMBERS_WIDTH
+ * @brief Number of digits reserved for printing numeric values.
+ */
 #define CNCPP_NUMBERS_WIDTH "9"
 
 
-// Custom type for data values
+/**
+ * @brief Scalar numeric type used for CNC data values.
+ */
 using data_t = double;
-// A point in ISO Gcode may have a coordinate or not: so use an optional type
+
+/**
+ * @brief Optional scalar value for coordinates that may be omitted in G-code.
+ */
 using opt_data_t = std::optional<data_t>;
+
+/**
+ * @brief Optional integer type used for nullable integral parameters.
+ */
 using opt_int_t = std::optional<int>;
 
 namespace cncpp {
+
+/**
+ * @brief Log categories used for terminal output.
+ */
+enum class LogType {
+  Message,
+  Computation,
+  Warning,
+  Error,
+};
+
+/**
+ * @brief Build a bold colored tag for terminal logging.
+ * @param type Log category.
+ * @param os Output stream to validate as terminal.
+ * @return Formatted tag string like "[Message]".
+ * @throws std::runtime_error If the stream is not a terminal stream.
+ */
+inline std::string log_tag(LogType type, std::ostream &os = std::cerr)
+{
+  bool const is_terminal = (&os == &std::cout && isatty(STDOUT_FILENO)) ||
+                           (&os == &std::cerr && isatty(STDERR_FILENO));
+
+  if (!is_terminal) {
+    throw std::runtime_error("cncpp::log_tag works only with terminal output streams");
+  }
+
+  switch (type) {
+  case LogType::Message:
+    return fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]");
+  case LogType::Computation:
+    return fmt::format(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "[Computation]");
+  case LogType::Warning:
+    return fmt::format(fmt::fg(fmt::color::gold) | fmt::emphasis::bold, "[Warning]");
+  case LogType::Error:
+    return fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[Error]");
+  default:
+    throw std::runtime_error("Unsupported cncpp::LogType value");
+  }
+}
+
 /**
  * @brief Common base interface for printable CNC domain objects.
  */
@@ -46,27 +107,23 @@ public:
    */
   virtual std::string desc(bool colored = true) const = 0;
 
-  /**
-   * @brief Stream output operator.
-   * @param os Output stream.
-   * @param p Point to print.
-   * @return Output stream reference.
-   */
   friend 
-  std::ostream& operator<<(std::ostream &os, Object const &p);
+  std::ostream &operator<<(std::ostream &os, Object const &p);
 
 };
 
 /**
  * @brief Stream output operator for Object.
+ * @details Delegates formatting to the virtual Object::desc(bool) method,
+ * selecting colored output only when the target stream is a terminal.
  * @param os Output stream.
  * @param o Object to print.
  * @return Output stream reference.
  */
-inline std::ostream& operator<<(std::ostream &os, Object const &o)
+inline std::ostream &operator<<(std::ostream &os, Object const &o)
 {
   bool is_terminal = (&os == &std::cout && isatty(STDOUT_FILENO)) ||
-                    (&os == &std::cerr && isatty(STDERR_FILENO));
+                     (&os == &std::cerr && isatty(STDERR_FILENO));
 
   os << o.desc(is_terminal);  // colored only if is terminal
 

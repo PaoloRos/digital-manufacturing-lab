@@ -16,33 +16,12 @@ Date: 2026-04-16
 
 #include "defines.hpp"
 #include "point.hpp"
+#include "machine.hpp"
 
 #include <string>
 #include <functional>
 
 namespace cncpp {
-
-/**
- * @brief Minimal machine interface used by Block during parsing/interpolation.
- */
-class Machine { 
-public:
-  /**
-   * @brief Get the machine reference point.
-   * @return Machine origin point.
-   */
-  Point zero() const { return Point(0.0, 0.0, 0.0); } // Reference point of the machine.
-  /**
-   * @brief Get machine control period.
-   * @return Time quantum in seconds.
-   */
-  data_t tq() const { return 0.01; }                  // Time step of the machine.
-  /**
-   * @brief Get machine maximum acceleration.
-   * @return Maximum acceleration value.
-   */
-  data_t A() const { return 1000.0; }                 // Maximum acceleration of the machine
-};
 
 /**
  * @brief Representation of a single G-code block.
@@ -80,7 +59,7 @@ public:
      * @param s Output current speed.
      * @return Progress factor in range [0, 1].
      */
-    data_t lambda(data_t t, data_t &s); // Motion interpolation: function lambda(t) = integral of velocity profile. It takes the time and the velocity as input, and return the value of lambda in range [0,1] and the current speed
+    data_t lambda(data_t t, data_t &s);
   };
 
   // LIFECYCLE =================================================================
@@ -95,7 +74,7 @@ public:
    * @param line Raw block text.
    * @param prev Previous parsed block.
    */
-  Block(std::string line, Block &prev); // Constructor that takes the previous block as argument
+  Block(std::string line, Block &prev);
   /** @brief Destroy the block. */
   ~Block();
   /**
@@ -103,13 +82,13 @@ public:
    * @param colored Enable ANSI colored output when true.
    * @return Human-readable block summary.
    */
-  std::string desc(bool colored = true) const override; // Returns a description of the block
+  std::string desc(bool colored = true) const override;
   /**
    * @brief Copy modal state from another parsed block.
    * @param o Source block.
    * @return Reference to this block.
    */
-  Block &operator=(Block &o); // 'this' = 'other' as reference
+  Block &operator=(Block &o);
 
   // OPERATIONS/OPERATORS ======================================================
 
@@ -118,7 +97,7 @@ public:
    * @param m Pointer to machine context.
    * @return Reference to this block.
    */
-  Block &parse(Machine const *m);                                 // Parse the line of G-code and extract the parameters
+  Block &parse(Machine const *m);
   /**
    * @brief Evaluate profile progress for a given time.
    * @param time Elapsed block time.
@@ -145,7 +124,7 @@ public:
    * @brief Iterate along the block with machine time step.
    * @param func Callback receiving block reference, time, lambda and speed.
    */
-  void walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> func);  // Walk along the block, in steps of dt, executing lamdas function at every step along the trajectory: flessibilità di eseguire una funzione mentre avviene l'interpolazione
+  void walk(std::function<void(Block &b, data_t t, data_t l, data_t s)> func);
 
   // ACCESSORS =================================================================
 
@@ -154,7 +133,7 @@ public:
   /** @brief Get block sequence number. */
   size_t n() const { return _n; }
   /** @brief Get total profile duration. */
-  data_t dt() const { return _profile.dt; } // fake accessor
+  data_t dt() const { return _profile.dt; }
   /** @brief Get block motion type. */
   BlockType type() const { return _type; }
   /** @brief Get selected tool number. */

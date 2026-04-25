@@ -10,7 +10,6 @@ Date: 2026-04-16
 #include "block.hpp"
 
 #include <string>
-#include <iostream>
 #include <sstream>
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -25,7 +24,7 @@ using namespace cncpp;
 // LIFECYCLE ===================================================================
 
 Block::Block(string line) : _line(line), _n(0) {
-  cerr << fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]")
+  cerr << log_tag(LogType::Message, cerr)
        << " Block " << _line << " created" << endl;
 }
 
@@ -33,7 +32,7 @@ Block::Block(string line, Block &prev) : Block(line) { *this = prev; }
 
 Block::~Block()
 {
-  cerr << fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]")
+  cerr << log_tag(LogType::Message, cerr)
        << " Block " << _line << " destroyed" << endl;
 }
 
@@ -99,8 +98,7 @@ Block &Block::parse(Machine const *m)
         "Parsing error at line: '{}'. Token: '{}': '{}",
          _line, token, e.what() );
 
-      std::cerr << fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[Error] ") 
-                << msg << std::endl;
+      std::cerr << log_tag(LogType::Error, std::cerr) << ' ' << msg << std::endl;
       throw runtime_error(msg);
     }
   }
@@ -237,8 +235,11 @@ bool Block::parse_token(string const &token)
   {
     case 'N':
       _n = stoi(arg);
-      if (prev && prev->_n <= _n)
-        throw invalid_argument("Block number " + arg + " is NOT greater than previous block number " + to_string(prev->_n));
+      if (prev && prev->_n >= _n)
+        throw invalid_argument(
+          "Block number " + to_string(format("[{:>3}] ", arg)) + " is NOT greater than previous block number " 
+          + to_string(format("[{:>3}] ", prev->_n))
+        );
     
     case 'G':
       _type = static_cast<BlockType>(stoi(arg));
@@ -294,26 +295,49 @@ bool Block::parse_token(string const &token)
 
 void Block::compute()
 {
-  cerr << fmt::format(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "[Compute] ") 
+  cerr << log_tag(LogType::Computation, cerr) << ' '
        << "Computing motion profile for block " << _line << endl;
 }
 
 void Block::calc_arc()
 {
-  cerr << fmt::format(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "[Compute] ") 
+  cerr << log_tag(LogType::Computation, cerr) << ' '
        << "Calculating arc parameters for block " << _line << endl;
 }
 
-// TESTS =======================================================================
+/*
+ _____         _     __  __       _       
+|_   _|__  ___| |_  |  \/  | __ _(_)_ __  
+  | |/ _ \/ __| __| | |\/| |/ _` | | '_ \ 
+  | |  __/\__ \ |_  | |  | | (_| | | | | |
+  |_|\___||___/\__| |_|  |_|\__,_|_|_| |_|
+                                          
+*/
 
 #ifdef CNCPP_BLOCK_TEST_MAIN
+#include <iostream>
+
+using namespace std;
 
 int main() {
-  Block b1("G1 X10 Y20 Z30 F1000");
 
-  cerr << (b1.parsed() ? "Block parsed" : "Block not parsed") << endl;
+  Machine m{};
 
-  Block b2("G1 X20 Y30 Z40 F1500", b1); // b2 inherits modal coords from b1
+  Block b1{"N01 G00 X100 Y100 z200"};
+  Block b2{"N02 G00 Z150", b1.parse(&m)};
+  Block b3{"n03 G01 x50 y20 T1 f5000 s200 M3", b2.parse(&m)};
+  b3.parse(&m); 
+  cerr << b1 << endl
+       << b2 << endl
+       << b3 << endl;
+
+  // walk along b3 and routinely print the time, coordinates, and feedrate
+  // first: print a header line
+  cout << "t,lambda,s,x,y,z" << endl;
+  b3.walk([&](Block &b, data_t t, data_t l, data_t s){
+    Point pos = b.interpolate(l);
+    cout << format("{:},{:},{:},{:},{:},{:}", t, l, s, pos.x(), pos.y(), pos.z()) << endl;
+  });
 
   return 0;
 }

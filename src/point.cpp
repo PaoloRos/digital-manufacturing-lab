@@ -7,7 +7,6 @@ Created: 2024-04-14
 
 #include "point.hpp"
 
-#include <iostream>
 #include <sstream>
 #include <unistd.h>
 #include <fmt/format.h>
@@ -117,6 +116,9 @@ static string coord_str(opt_data_t const &coord, col_t const &color)
 
 // In cpp only one main: if we want to write tests in the same file, we can use a preprocessor directive to include a main function only when a specific macro is defined (e.g., CNCPP_TEST_MAIN). This way, we can compile the file with tests when needed, and without tests otherwise.
 #ifdef CNCPP_POINT_TEST_MAIN
+#include <iostream>
+
+using namespace std;
 
 int main() {
   Point p1(1.0,2.0,3.0);
