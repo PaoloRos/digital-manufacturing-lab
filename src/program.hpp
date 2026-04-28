@@ -47,7 +47,7 @@ class Program : public Object, public std::list<Block>
   bool done() const { return _done; }
 
   private:
-  Machine *_m = nullptr;      // Pointer to a read-only machine
+  Machine *_m = nullptr;            // Pointer to a read-only machine
   std::string _filename = "";       // Source file name
   iterator _current = this->end();  // Iterator pointing to the current block being executed
   bool _done = false;               // Flag indicating whether the program execution is completed

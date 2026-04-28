@@ -55,6 +55,7 @@ public:
     data_t current_acc = 0.0;           // current acceleration along an arc
     /**
      * @brief Compute normalized trajectory progress at time t.
+     * @details The implemented trajectory is a trapezoidal velocity profile, with acceleration, cruise and decelaration phases.
      * @param t Time from block start.
      * @param s Output current speed.
      * @return Progress factor in range [0, 1].
@@ -186,7 +187,7 @@ bool _parsed = false;                         // flag whther correctly parsed or
   data_t _theta_0 = 0.0, _dtheta = 0.0;       // arc angles: initial and included angle
   // --- Machining ---
   data_t _feedrate = 0.0;
-  data_t _arc_feedrate = 0.0;                 // arc feedrate
+  data_t _arc_feedrate = 0.0;                 // arc feedrate (mm/min)
   data_t _spindle = 0.0;                      // rotational spindle rate
   data_t _acc = 0.0;                          // actual acceleration
   size_t _m = 0.0;                            // M command argument, eg M03 -> _m = 3.0
@@ -214,15 +215,6 @@ inline Point Block::start_point() const
     throw std::logic_error("Machine not set for block " + std::to_string(_n));
 
   return prev ? prev->target() : _machine->zero();
-}
-
-// Temporary
-
-inline data_t Block::Profile::lambda(data_t t, data_t &s)
-{
-  (void)t;
-  s = 0.0;
-  return 0.0;
 }
 
 } // namespace cncpp

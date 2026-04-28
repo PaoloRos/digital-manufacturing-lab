@@ -11,6 +11,7 @@ Covers the public API of cncpp::Block and reports method-level failures.
 
 #include "block.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -22,7 +23,7 @@ constexpr double kEps = 1e-9;
 
 bool approx_equal(double a, double b)
 {
-  return std::fabs(a - b) <= kEps;
+  return std::fabs(a - b) <= kEps * std::max(1.0, std::max(std::fabs(a), std::fabs(b)));
 }
 
 bool require(bool condition, const std::string &msg)
@@ -114,6 +115,124 @@ int main()
     failures += !require(approx_equal(p_t.x(), 0.0), "interpolate(time,...): x at t=0");
     failures += !require(approx_equal(p_t.y(), 0.0), "interpolate(time,...): y at t=0");
     failures += !require(approx_equal(p_t.z(), 0.0), "interpolate(time,...): z at t=0");
+  }
+
+  // compute(): long block -> trapezoidal profile with quantized duration
+  {
+    Block b("G1 X10 Y0 Z0 F1200");
+    b.parse(&machine);
+
+    const auto &profile = b.profile();
+    failures += !require(approx_equal(b.length(), 10.0), "compute(long): path length");
+    failures += !require(approx_equal(profile.dt_1, 0.02), "compute(long): dt_1");
+    failures += !require(approx_equal(profile.dt_2, 0.02), "compute(long): dt_2");
+    failures += !require(approx_equal(profile.dt_m, 0.481), "compute(long): dt_m after quantization");
+    failures += !require(approx_equal(profile.dt, 0.521), "compute(long): quantized total duration");
+    failures += !require(approx_equal(profile.f, 19.96007984031936), "compute(long): adjusted peak feedrate");
+    failures += !require(approx_equal(profile.a, 998.0039920159681), "compute(long): acceleration");
+    failures += !require(approx_equal(profile.d, -998.0039920159681), "compute(long): deceleration");
+
+    double speed = -1.0;
+    const double l0 = b.lambda(0.0, speed);
+    failures += !require(approx_equal(l0, 0.0), "lambda(long): at t=0");
+    failures += !require(approx_equal(speed, 0.0), "lambda(long): speed at t=0");
+
+    const double t_acc = profile.dt_1 / 2.0;
+    const double l_acc = b.lambda(t_acc, speed);
+    failures += !require(l_acc > 0.0 && l_acc < 1.0, "lambda(long): acceleration phase progress");
+    failures += !require(approx_equal(speed, profile.a * t_acc * 60.0), "lambda(long): acceleration phase speed");
+
+    const double t_cruise = profile.dt_1 + profile.dt_m / 2.0;
+    const double l_cruise = b.lambda(t_cruise, speed);
+    failures += !require(l_cruise > l_acc, "lambda(long): cruise phase progress increases");
+    failures += !require(approx_equal(speed, profile.f * 60.0), "lambda(long): cruise speed");
+
+    const double l_end = b.lambda(profile.dt, speed);
+    failures += !require(approx_equal(l_end, 1.0), "lambda(long): at end of block");
+    failures += !require(approx_equal(speed, 0.0), "lambda(long): speed at end of block");
+  }
+
+  // compute(): short block -> triangular profile
+  {
+    Block b("G1 X0.1 Y0 Z0 F1200");
+    b.parse(&machine);
+
+    const auto &profile = b.profile();
+    failures += !require(approx_equal(b.length(), 0.1), "compute(short): path length");
+    failures += !require(approx_equal(profile.dt_1, 0.01), "compute(short): dt_1");
+    failures += !require(approx_equal(profile.dt_2, 0.011), "compute(short): dt_2 after quantization");
+    failures += !require(approx_equal(profile.dt_m, 0.0), "compute(short): no cruise phase");
+    failures += !require(approx_equal(profile.dt, 0.021), "compute(short): quantized total duration");
+    failures += !require(approx_equal(profile.f, 9.523809523809524), "compute(short): peak feedrate");
+
+    double speed = -1.0;
+    const double t_mid = profile.dt_1 / 2.0;
+    const double l_mid = b.lambda(t_mid, speed);
+    failures += !require(l_mid > 0.0 && l_mid < 1.0, "lambda(short): acceleration phase progress");
+    failures += !require(approx_equal(speed, profile.a * t_mid * 60.0), "lambda(short): acceleration speed");
+
+    const double l_end = b.lambda(profile.dt, speed);
+    failures += !require(approx_equal(l_end, 1.0), "lambda(short): at end of block");
+    failures += !require(approx_equal(speed, 0.0), "lambda(short): speed at end of block");
+  }
+
+  // calc_arc(): center from I/J offsets and interpolation over a quarter circle
+  {
+    Block start("G1 X0.25 Y0 Z0 F1200");
+    start.parse(&machine);
+
+    Block arc("G3 X0 Y0.25 I-0.25 J0 F500", start);
+    arc.parse(&machine);
+
+    failures += !require(approx_equal(arc.center().x(), 0.0), "calc_arc(IJ): center x");
+    failures += !require(approx_equal(arc.center().y(), 0.0), "calc_arc(IJ): center y");
+    failures += !require(approx_equal(arc.r(), 0.25), "calc_arc(IJ): radius");
+    failures += !require(approx_equal(arc.theta_0(), 0.0), "calc_arc(IJ): initial angle");
+    failures += !require(approx_equal(arc.dtheta(), std::acos(-1.0) / 2.0), "calc_arc(IJ): swept angle");
+    failures += !require(approx_equal(arc.length(), std::acos(-1.0) * 0.25 / 2.0), "calc_arc(IJ): arc length");
+    failures += !require(approx_equal(arc.arc_feedrate(), 500.0), "calc_arc(IJ): nominal feedrate preserved");
+
+    const Point p_half = arc.interpolate(0.5);
+    const double c = std::sqrt(0.5) * 0.25;
+    failures += !require(approx_equal(p_half.x(), c), "interpolate(arc IJ): x at lambda=0.5");
+    failures += !require(approx_equal(p_half.y(), c), "interpolate(arc IJ): y at lambda=0.5");
+    failures += !require(approx_equal(p_half.z(), 0.0), "interpolate(arc IJ): z stays constant");
+
+    double speed = -1.0;
+    const double l_end = arc.lambda(arc.dt(), speed);
+    failures += !require(approx_equal(l_end, 1.0), "lambda(arc IJ): end of block");
+    failures += !require(approx_equal(speed, 0.0), "lambda(arc IJ): speed at end of block");
+  }
+
+  // calc_arc(): radius-based center reconstruction and feedrate limiting
+  {
+    Block start("G1 X0.25 Y0 Z0 F2000");
+    start.parse(&machine);
+
+    Block arc("G3 X0 Y0.25 R0.25 F2000", start);
+    arc.parse(&machine);
+
+    failures += !require(approx_equal(arc.center().x(), 0.0), "calc_arc(R): center x");
+    failures += !require(approx_equal(arc.center().y(), 0.0), "calc_arc(R): center y");
+    failures += !require(approx_equal(arc.r(), 0.25), "calc_arc(R): radius");
+    failures += !require(approx_equal(arc.dtheta(), std::acos(-1.0) / 2.0), "calc_arc(R): swept angle");
+    failures += !require(approx_equal(arc.arc_feedrate(), 948.6832980505138), "calc_arc(R): limited arc feedrate");
+    failures += !require(approx_equal(arc.length(), std::acos(-1.0) * 0.25 / 2.0), "calc_arc(R): arc length");
+  }
+
+  // parse() with arc endpoint mismatch should throw
+  {
+    Block start("G1 X0.25 Y0 Z0 F1200");
+    start.parse(&machine);
+
+    Block arc("G3 X0 Y0.25 I-0.25 J0.05 F1200", start);
+    bool threw = false;
+    try {
+      arc.parse(&machine);
+    } catch (const std::runtime_error &) {
+      threw = true;
+    }
+    failures += !require(threw, "calc_arc(IJ): endpoint mismatch throws runtime_error");
   }
 
   // constructor with previous block + operator=
