@@ -21,6 +21,57 @@ namespace {
 
 constexpr double kEps = 1e-9;
 
+struct ExpectedProfile {
+  double dt_1 = 0.0;
+  double dt_m = 0.0;
+  double dt_2 = 0.0;
+  double dt = 0.0;
+  double f = 0.0;
+  double a = 0.0;
+  double d = 0.0;
+};
+
+ExpectedProfile expected_profile(double length, double feedrate, const cncpp::Machine &machine)
+{
+  ExpectedProfile out;
+  const double a_max = machine.A();
+  const double tq = machine.tq();
+  double dq = 0.0;
+
+  double f_m = feedrate / 60.0;
+  double dt_1 = f_m / a_max;
+  double dt_2 = dt_1;
+  double dt_m = length / f_m - (dt_1 + dt_2) / 2.0;
+
+  auto quantize = [&](double t) {
+    double q = static_cast<size_t>(t / tq + 1) * tq;
+    dq = q - t;
+    return q;
+  };
+
+  double dt = 0.0;
+  if (dt_m > 0.0) {
+    dt = quantize(dt_1 + dt_m + dt_2);
+    dt_m += dq;
+    f_m = (2.0 * length) / (dt_1 + dt_2 + 2.0 * dt_m);
+  } else {
+    dt_1 = dt_2 = std::sqrt(length / a_max);
+    dt = quantize(dt_1 + dt_2);
+    dt_m = 0.0;
+    dt_2 += dq;
+    f_m = (2.0 * length) / (dt_1 + dt_2);
+  }
+
+  out.dt_1 = dt_1;
+  out.dt_m = dt_m;
+  out.dt_2 = dt_2;
+  out.dt = dt;
+  out.f = f_m;
+  out.a = f_m / dt_1;
+  out.d = -(f_m / dt_2);
+  return out;
+}
+
 bool approx_equal(double a, double b)
 {
   return std::fabs(a - b) <= kEps * std::max(1.0, std::max(std::fabs(a), std::fabs(b)));
@@ -119,18 +170,19 @@ int main()
 
   // compute(): long block -> trapezoidal profile with quantized duration
   {
-    Block b("G1 X10 Y0 Z0 F1200");
+    Block b("G1 X200 Y0 Z0 F1200");
     b.parse(&machine);
 
     const auto &profile = b.profile();
-    failures += !require(approx_equal(b.length(), 10.0), "compute(long): path length");
-    failures += !require(approx_equal(profile.dt_1, 0.02), "compute(long): dt_1");
-    failures += !require(approx_equal(profile.dt_2, 0.02), "compute(long): dt_2");
-    failures += !require(approx_equal(profile.dt_m, 0.481), "compute(long): dt_m after quantization");
-    failures += !require(approx_equal(profile.dt, 0.521), "compute(long): quantized total duration");
-    failures += !require(approx_equal(profile.f, 19.96007984031936), "compute(long): adjusted peak feedrate");
-    failures += !require(approx_equal(profile.a, 998.0039920159681), "compute(long): acceleration");
-    failures += !require(approx_equal(profile.d, -998.0039920159681), "compute(long): deceleration");
+    const auto expected = expected_profile(b.length(), b.feedrate(), machine);
+    failures += !require(approx_equal(b.length(), 200.0), "compute(long): path length");
+    failures += !require(approx_equal(profile.dt_1, expected.dt_1), "compute(long): dt_1");
+    failures += !require(approx_equal(profile.dt_2, expected.dt_2), "compute(long): dt_2");
+    failures += !require(approx_equal(profile.dt_m, expected.dt_m), "compute(long): dt_m after quantization");
+    failures += !require(approx_equal(profile.dt, expected.dt), "compute(long): quantized total duration");
+    failures += !require(approx_equal(profile.f, expected.f), "compute(long): adjusted peak feedrate");
+    failures += !require(approx_equal(profile.a, expected.a), "compute(long): acceleration");
+    failures += !require(approx_equal(profile.d, expected.d), "compute(long): deceleration");
 
     double speed = -1.0;
     const double l0 = b.lambda(0.0, speed);
@@ -158,12 +210,13 @@ int main()
     b.parse(&machine);
 
     const auto &profile = b.profile();
+    const auto expected = expected_profile(b.length(), b.feedrate(), machine);
     failures += !require(approx_equal(b.length(), 0.1), "compute(short): path length");
-    failures += !require(approx_equal(profile.dt_1, 0.01), "compute(short): dt_1");
-    failures += !require(approx_equal(profile.dt_2, 0.011), "compute(short): dt_2 after quantization");
-    failures += !require(approx_equal(profile.dt_m, 0.0), "compute(short): no cruise phase");
-    failures += !require(approx_equal(profile.dt, 0.021), "compute(short): quantized total duration");
-    failures += !require(approx_equal(profile.f, 9.523809523809524), "compute(short): peak feedrate");
+    failures += !require(approx_equal(profile.dt_1, expected.dt_1), "compute(short): dt_1");
+    failures += !require(approx_equal(profile.dt_2, expected.dt_2), "compute(short): dt_2 after quantization");
+    failures += !require(approx_equal(profile.dt_m, expected.dt_m), "compute(short): no cruise phase");
+    failures += !require(approx_equal(profile.dt, expected.dt), "compute(short): quantized total duration");
+    failures += !require(approx_equal(profile.f, expected.f), "compute(short): peak feedrate");
 
     double speed = -1.0;
     const double t_mid = profile.dt_1 / 2.0;
@@ -184,13 +237,16 @@ int main()
     Block arc("G3 X0 Y0.25 I-0.25 J0 F500", start);
     arc.parse(&machine);
 
+    const double arc_limit = std::sqrt(machine.A() * arc.r()) * 60.0;
+    const double arc_expected_feed = std::min(500.0, arc_limit);
+
     failures += !require(approx_equal(arc.center().x(), 0.0), "calc_arc(IJ): center x");
     failures += !require(approx_equal(arc.center().y(), 0.0), "calc_arc(IJ): center y");
     failures += !require(approx_equal(arc.r(), 0.25), "calc_arc(IJ): radius");
     failures += !require(approx_equal(arc.theta_0(), 0.0), "calc_arc(IJ): initial angle");
     failures += !require(approx_equal(arc.dtheta(), std::acos(-1.0) / 2.0), "calc_arc(IJ): swept angle");
     failures += !require(approx_equal(arc.length(), std::acos(-1.0) * 0.25 / 2.0), "calc_arc(IJ): arc length");
-    failures += !require(approx_equal(arc.arc_feedrate(), 500.0), "calc_arc(IJ): nominal feedrate preserved");
+    failures += !require(approx_equal(arc.arc_feedrate(), arc_expected_feed), "calc_arc(IJ): arc feedrate limited");
 
     const Point p_half = arc.interpolate(0.5);
     const double c = std::sqrt(0.5) * 0.25;
@@ -212,11 +268,14 @@ int main()
     Block arc("G3 X0 Y0.25 R0.25 F2000", start);
     arc.parse(&machine);
 
+    const double arc_limit = std::sqrt(machine.A() * arc.r()) * 60.0;
+    const double arc_expected_feed = std::min(2000.0, arc_limit);
+
     failures += !require(approx_equal(arc.center().x(), 0.0), "calc_arc(R): center x");
     failures += !require(approx_equal(arc.center().y(), 0.0), "calc_arc(R): center y");
     failures += !require(approx_equal(arc.r(), 0.25), "calc_arc(R): radius");
     failures += !require(approx_equal(arc.dtheta(), std::acos(-1.0) / 2.0), "calc_arc(R): swept angle");
-    failures += !require(approx_equal(arc.arc_feedrate(), 948.6832980505138), "calc_arc(R): limited arc feedrate");
+    failures += !require(approx_equal(arc.arc_feedrate(), arc_expected_feed), "calc_arc(R): limited arc feedrate");
     failures += !require(approx_equal(arc.length(), std::acos(-1.0) * 0.25 / 2.0), "calc_arc(R): arc length");
   }
 

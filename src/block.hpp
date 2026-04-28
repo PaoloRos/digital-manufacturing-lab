@@ -36,23 +36,23 @@ public:
    * @brief Motion type encoded by G commands.
    */
   enum class BlockType {
-    RAPID = 0,            // non-cutting rapid positioning
-    LINE,                 // linear motion
-    CWA,                  // clockwise arc
-    CCWA,                 // counterclockwise arc
-    NO_MOTION
+    RAPID = 0,            /**< Non-cutting rapid positioning. */
+    LINE,                 /**< Linear motion. */
+    CWA,                  /**< Clockwise arc. */
+    CCWA,                 /**< Counterclockwise arc. */
+    NO_MOTION             /**< No motion command. */
   };
 
   /**
    * @brief Kinematic profile associated with the block.
    */
   struct Profile {
-    data_t a = 0.0, d = 0.0;            // acceleration and deceleration
-    data_t f = 0.0, l = 0.0;            // feedrate and length of the block
-    data_t fs = 0.0, fe = 0.0;          // starting and final feedrate
-    data_t dt_1 = 0.0, dt_m = 0.0, dt_2 = 0.0;  // duration of acceleration, cruise and deceleration phases
-    data_t dt = 0.0;                    // total duration
-    data_t current_acc = 0.0;           // current acceleration along an arc
+    data_t a = 0.0, d = 0.0;            /**< Acceleration and deceleration. */
+    data_t f = 0.0, l = 0.0;            /**< Feedrate and length. */
+    data_t fs = 0.0, fe = 0.0;          /**< Starting and final feedrate. */
+    data_t dt_1 = 0.0, dt_m = 0.0, dt_2 = 0.0;  /**< Accel, cruise, and decel durations. */
+    data_t dt = 0.0;                    /**< Total duration. */
+    data_t current_acc = 0.0;           /**< Current acceleration along an arc. */
     /**
      * @brief Compute normalized trajectory progress at time t.
      * @details The implemented trajectory is a trapezoidal velocity profile, with acceleration, cruise and decelaration phases.
@@ -77,7 +77,7 @@ public:
    */
   Block(std::string line, Block &prev);
   /** @brief Destroy the block. */
-  ~Block();
+  ~Block(); // = default; // at the end define as defualt
   /**
    * @brief Build a string description of the block.
    * @param colored Enable ANSI colored output when true.

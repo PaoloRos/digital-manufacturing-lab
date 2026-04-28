@@ -24,7 +24,7 @@ using namespace cncpp;
 // LIFECYCLE ===================================================================
 
 Block::Block(string line) : _line(line), _n(0) {
-  cerr << log_tag(LogType::Message, cerr)
+  cerr << log_tag(LogType::MESSAGE, cerr)
        << " Block " << _line << " created" << endl;
 }
 
@@ -32,7 +32,7 @@ Block::Block(string line, Block &prev) : Block(line) { *this = prev; }
 
 Block::~Block()
 {
-  cerr << log_tag(LogType::Message, cerr)
+  cerr << log_tag(LogType::MESSAGE, cerr)
        << " Block " << _line << " destroyed" << endl;
 }
 
@@ -98,7 +98,7 @@ Block &Block::parse(Machine const *m)
         "Parsing error at line: '{}'. Token: '{}': '{}",
          _line, token, e.what() );
 
-      std::cerr << log_tag(LogType::Error, std::cerr) << ' ' << msg << std::endl;
+      std::cerr << log_tag(LogType::ERROR, std::cerr) << ' ' << msg << std::endl;
       throw runtime_error(msg);
     }
   }
@@ -289,7 +289,7 @@ bool Block::parse_token(string const &token)
 
 void Block::compute()
 {
-  cerr << log_tag(LogType::Computation, cerr) << ' '
+  cerr << log_tag(LogType::COMPUTATION, cerr) << ' '
        << "Computing motion profile for block " << _line << endl;
 
   data_t const &l = _length, &A = _acc;
@@ -339,8 +339,6 @@ void Block::calc_arc()
   if (_r) { // if the radius is given
     data_t dx = _delta.x();
     data_t dy = _delta.y();
-    data_t dxy2 = pow(dx, 2) + pow(dy, 2);
-    data_t sq = sqrt(-pow(dy, 2) * dxy2 * (dxy2 - 4 * _r * _r));
     // signs table
     // sign(r) | CW(-1) | CCW(+1)
     // --------------------------
@@ -348,8 +346,10 @@ void Block::calc_arc()
     //      +1 |     -  |    +
     int s = (_r > 0) - (_r < 0);
     s *= (_type == BlockType::CCWA ? 1 : -1);
-    xc = x0 + (dx - s * sq / dxy2) / 2.0;
-    yc = y0 + dy / 2.0 + s * (dx * sq) / (2 * dy * dxy2);
+    data_t d = hypot(dx, dy);
+    data_t sq = sqrt(pow(_r, 2) - pow(d, 2)/4.0) / d;
+    xc = (x0 + xf)/2.0 - s * dy * sq;
+    yc = (y0 + yf)/2.0 + s * dx * sq;
   } else { // if I,J are given
     data_t r2;
     _r = hypot(_i, _j);
@@ -372,7 +372,7 @@ void Block::calc_arc()
   if (_type == BlockType::CWA)
     _dtheta = -(2 * M_PI - _dtheta);
   //
-  _length = hypot(zf - z0, _dtheta * _r);
+  _length = fabs(_dtheta * _r);
   // from now on, it's safer to drop the sign of radius angle
   _r = fabs(_r);
 }
@@ -456,3 +456,43 @@ int main() {
 }
 
 #endif // CNCPP_BLOCK_TEST_MAIN
+
+#ifdef CNCPP_BLOCK_UNIT_TESTS_EXERCISE
+
+#include <iostream>
+
+#include "defines.hpp"
+
+#define kEps 1e-4
+
+size_t errors_count = 0;
+
+using namespace std;
+using namespace cncpp;
+
+int main()
+{
+  Machine m{};
+
+  // Line interpolation test
+
+  // andrebbe fatto per ogni istruzione
+  try {
+  Block b1{"N1 g00 x0 y0 z0"};
+  Block b2{"N2 q01 x100 y100 z0 f1000", b1.parse(&m)};
+  b2.parse(&m);
+  cout << b1 << endl
+       << b2 << endl;
+  } catch (std::exception const &e) {
+    cerr << log_tag(LogType::WARNING) << " Errors count incremented: " << ++errors_count << endl;
+  }
+
+  // to be continued...
+
+
+
+  cerr << log_tag(LogType::WARNING) << " Total errors: " << errors_count << endl;
+  return (errors_count == 0) ? 0 : -1;
+}
+
+#endif // CNCPP_BLOCK_UNIT_TESTS_EXERCISE

@@ -100,14 +100,7 @@ include_directories(
   ${rang_SOURCE_DIR}/include
   ${json_SOURCE_DIR}/include
   ${yaml-cpp_SOURCE_DIR}/include
-  ${mosquitto_SOURCE_DIR}/include
-  ${mosquitto_SOURCE_DIR}/lib/cpp
   # /opt/homebrew/include
-)
-
-link_directories(
-  ${mosquitto_BINARY_DIR}/lib
-  ${mosquitto_BINARY_DIR}/lib/cpp
 )
 
 #    ____             __ _                          _    __ _ _
@@ -121,8 +114,6 @@ link_directories(
 #   ${SRC_DIR}/defines.hpp.in
 #   ${SRC_DIR}/defines.hpp
 # )
-
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
 
 #  ____                                        _        _   _             
 # |  _ \  ___   ___ _   _ _ __ ___   ___ _ __ | |_ __ _| |_(_) ___  _ __  
@@ -192,6 +183,11 @@ target_link_libraries(point_test PRIVATE cncpp fmt::fmt)
 add_executable(block_test ${SRC_DIR}/block.cpp)
 target_compile_definitions(block_test PRIVATE CNCPP_BLOCK_TEST_MAIN)
 target_link_libraries(block_test PRIVATE cncpp fmt::fmt)
+
+# CNCPP_BLOCK_UNIT_TESTS_EXERCISE
+add_executable(block_unit_tests_exercise ${SRC_DIR}/block.cpp)
+target_compile_definitions(block_unit_tests_exercise PRIVATE CNCPP_BLOCK_UNIT_TESTS_EXERCISE)
+target_link_libraries(block_unit_tests_exercise PRIVATE cncpp fmt::fmt)
 
 
 #   ___           _        _ _

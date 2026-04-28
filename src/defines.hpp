@@ -59,10 +59,10 @@ namespace cncpp {
  * @brief Log categories used for terminal output.
  */
 enum class LogType {
-  Message,
-  Computation,
-  Warning,
-  Error,
+  MESSAGE,
+  COMPUTATION,
+  WARNING,
+  ERROR,
 };
 
 /**
@@ -82,13 +82,13 @@ inline std::string log_tag(LogType type, std::ostream &os = std::cerr)
   }
 
   switch (type) {
-  case LogType::Message:
+  case LogType::MESSAGE:
     return fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]");
-  case LogType::Computation:
+  case LogType::COMPUTATION:
     return fmt::format(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "[Computation]");
-  case LogType::Warning:
+  case LogType::WARNING:
     return fmt::format(fmt::fg(fmt::color::gold) | fmt::emphasis::bold, "[Warning]");
-  case LogType::Error:
+  case LogType::ERROR:
     return fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[Error]");
   default:
     throw std::runtime_error("Unsupported cncpp::LogType value");
@@ -100,6 +100,7 @@ inline std::string log_tag(LogType type, std::ostream &os = std::cerr)
  */
 class Object {
 public:
+  virtual ~Object() = default;
   /**
    * @brief Build a textual description of the object.
    * @param colored Enable ANSI colors when true.
