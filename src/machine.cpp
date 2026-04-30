@@ -38,3 +38,4 @@ data_t Machine::quantize(data_t t, data_t &dq) const
   dq = q - t;                                 // quantization error
   return q;
 }
+

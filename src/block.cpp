@@ -358,7 +358,9 @@ void Block::calc_arc()
     r2 = hypot(xf - xc, yf - yc);
     if (fabs(_r - r2) > _machine->error()) {
       throw runtime_error(
-          fmt::format("Arc endpoints mismatch error ({:})", _r - r2).c_str());
+          fmt::format("Block {:}: Arc endpoints mismatch error ({:} vs: {:})",
+                      n(), _r - r2, _machine->max_error())
+              .c_str());
     }
   }
   _center.x(xc);
@@ -375,6 +377,10 @@ void Block::calc_arc()
   _length = fabs(_dtheta * _r);
   // from now on, it's safer to drop the sign of radius angle
   _r = fabs(_r);
+  if (isnan(_r) || isinf(_r)) {
+    throw runtime_error(
+        fmt::format("Block {:}: Invalid arc radius: {:}", n(), _r).c_str());
+  }
 }
 
 /*

@@ -18,6 +18,7 @@ Created: 2026-04-14
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <sstream>
 
 #include <fmt/color.h>
 #include <fmt/format.h>
