@@ -36,6 +36,8 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_LIST_DIR}/usr CACHE PATH "Install path 
 
 include(CTest)
 
+option(BUILD_QUICK_TESTS "Build quick developer test executables" OFF)
+
 message(STATUS "SRC_DIR: ${SRC_DIR}")
 message(STATUS "MAIN_DIR: ${MAIN_DIR}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
@@ -174,20 +176,27 @@ if(BUILD_TESTING)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
 endif()
 
-# Point test
-add_executable(point_test ${SRC_DIR}/point.cpp)
-target_compile_definitions(point_test PRIVATE CNCPP_POINT_TEST_MAIN)
-target_link_libraries(point_test PRIVATE cncpp fmt::fmt)
+if(BUILD_QUICK_TESTS)
+  set(QUICK_TEST_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/quick_tests")
 
-# Block test
-add_executable(block_test ${SRC_DIR}/block.cpp)
-target_compile_definitions(block_test PRIVATE CNCPP_BLOCK_TEST_MAIN)
-target_link_libraries(block_test PRIVATE cncpp fmt::fmt)
+  # Point test
+  add_executable(point_test ${SRC_DIR}/point.cpp)
+  target_compile_definitions(point_test PRIVATE CNCPP_POINT_TEST_MAIN)
+  target_link_libraries(point_test PRIVATE cncpp fmt::fmt)
+  set_target_properties(point_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
 
-# CNCPP_BLOCK_UNIT_TESTS_EXERCISE
-add_executable(block_unit_tests_exercise ${SRC_DIR}/block.cpp)
-target_compile_definitions(block_unit_tests_exercise PRIVATE CNCPP_BLOCK_UNIT_TESTS_EXERCISE)
-target_link_libraries(block_unit_tests_exercise PRIVATE cncpp fmt::fmt)
+  # Block test
+  add_executable(block_test ${SRC_DIR}/block.cpp)
+  target_compile_definitions(block_test PRIVATE CNCPP_BLOCK_TEST_MAIN)
+  target_link_libraries(block_test PRIVATE cncpp fmt::fmt)
+  set_target_properties(block_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
+
+  # Program test
+  add_executable(program_test ${SRC_DIR}/program.cpp)
+  target_compile_definitions(program_test PRIVATE CNCPP_PROGRAM_TEST_MAIN)
+  target_link_libraries(program_test PRIVATE cncpp fmt::fmt)
+  set_target_properties(program_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
+endif()
 
 
 #   ___           _        _ _

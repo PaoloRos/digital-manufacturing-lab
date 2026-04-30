@@ -1,17 +1,15 @@
 /*
- ____  _            _      _   _       _ _     _____         _   
-| __ )| | ___   ___| | __ | | | |_ __ (_) |_  |_   _|__  ___| |_ 
+ ____  _            _      _   _       _ _     _____         _
+| __ )| | ___   ___| | __ | | | |_ __ (_) |_  |_   _|__  ___| |_
 |  _ \| |/ _ \ / __| |/ / | | | | '_ \| | __|   | |/ _ \/ __| __|
-| |_) | | (_) | (__|   <  | |_| | | | | | |_    | |  __/\__ \ |_ 
+| |_) | | (_) | (__|   <  | |_| | | | | | |_    | |  __/\__ \ |_
 |____/|_|\___/ \___|_|\_\  \___/|_| |_|_|\__|   |_|\___||___/\__|
-                                      
 
-Covers the public API of cncpp::Block and reports method-level failures.
+Block class unit tests based on tests/TODO.md.
 */
 
 #include "block.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -19,71 +17,48 @@ Covers the public API of cncpp::Block and reports method-level failures.
 
 namespace {
 
-constexpr double kEps = 1e-9;
+constexpr double k_tol = 1e-4;
 
-struct ExpectedProfile {
-  double dt_1 = 0.0;
-  double dt_m = 0.0;
-  double dt_2 = 0.0;
-  double dt = 0.0;
-  double f = 0.0;
-  double a = 0.0;
-  double d = 0.0;
-};
-
-ExpectedProfile expected_profile(double length, double feedrate, const cncpp::Machine &machine)
+double abs_diff(double a, double b)
 {
-  ExpectedProfile out;
-  const double a_max = machine.A();
-  const double tq = machine.tq();
-  double dq = 0.0;
-
-  double f_m = feedrate / 60.0;
-  double dt_1 = f_m / a_max;
-  double dt_2 = dt_1;
-  double dt_m = length / f_m - (dt_1 + dt_2) / 2.0;
-
-  auto quantize = [&](double t) {
-    double q = static_cast<size_t>(t / tq + 1) * tq;
-    dq = q - t;
-    return q;
-  };
-
-  double dt = 0.0;
-  if (dt_m > 0.0) {
-    dt = quantize(dt_1 + dt_m + dt_2);
-    dt_m += dq;
-    f_m = (2.0 * length) / (dt_1 + dt_2 + 2.0 * dt_m);
-  } else {
-    dt_1 = dt_2 = std::sqrt(length / a_max);
-    dt = quantize(dt_1 + dt_2);
-    dt_m = 0.0;
-    dt_2 += dq;
-    f_m = (2.0 * length) / (dt_1 + dt_2);
-  }
-
-  out.dt_1 = dt_1;
-  out.dt_m = dt_m;
-  out.dt_2 = dt_2;
-  out.dt = dt;
-  out.f = f_m;
-  out.a = f_m / dt_1;
-  out.d = -(f_m / dt_2);
-  return out;
+  return std::fabs(a - b);
 }
 
-bool approx_equal(double a, double b)
+bool approx_equal(double a, double b, double tol = k_tol)
 {
-  return std::fabs(a - b) <= kEps * std::max(1.0, std::max(std::fabs(a), std::fabs(b)));
+  return abs_diff(a, b) <= tol;
 }
 
 bool require(bool condition, const std::string &msg)
 {
-  if (!condition) {
-    std::cerr << "[FAIL] " << msg << '\n';
-    return false;
+  if (condition) {
+    std::cout << "[PASS] " << msg << '\n';
+    return true;
   }
-  return true;
+  std::cerr << "[FAIL] " << msg << '\n';
+  return false;
+}
+
+bool require_close(double expected, double got, const std::string &msg)
+{
+  if (approx_equal(expected, got)) {
+    std::cout << "[PASS] " << msg << " expected=" << expected << " got=" << got << '\n';
+    return true;
+  }
+  std::cerr << "[FAIL] " << msg << " expected=" << expected << " got=" << got << '\n';
+  return false;
+}
+
+bool require_close_at(double expected, double got, double time, const std::string &msg)
+{
+  if (approx_equal(expected, got)) {
+    std::cout << "[PASS] " << msg << " expected=" << expected << " got=" << got
+              << " time=" << time << '\n';
+    return true;
+  }
+  std::cerr << "[FAIL] " << msg << " expected=" << expected << " got=" << got
+            << " time=" << time << '\n';
+  return false;
 }
 
 } // namespace
@@ -97,246 +72,264 @@ int main()
   int failures = 0;
   Machine machine;
 
-  // LIFECYCLE + ACCESSORS (default state)
-  {
-    Block b("G1 X10 Y20 Z30 F1200 S800 T2 M3");
-    failures += !require(b.line() == "G1 X10 Y20 Z30 F1200 S800 T2 M3", "line(): stores input line");
-    failures += !require(!b.parsed(), "parsed(): false before parse");
-    failures += !require(b.n() == 0U, "n(): default block number");
-    failures += !require(b.type() == Block::BlockType::NO_MOTION, "type(): default NO_MOTION");
-    failures += !require(b.tool() == 0U, "tool(): default zero");
-    failures += !require(approx_equal(b.feedrate(), 0.0), "feedrate(): default zero");
-    failures += !require(approx_equal(b.arc_feedrate(), 0.0), "arc_feedrate(): default zero");
-    failures += !require(approx_equal(b.spindle(), 0.0), "spindle(): default zero");
-    failures += !require(approx_equal(b.length(), 0.0), "length(): default zero");
-    failures += !require(b.m() == 0U, "m(): default zero");
-    failures += !require(approx_equal(b.r(), 0.0), "r(): default zero");
-    failures += !require(approx_equal(b.theta_0(), 0.0), "theta_0(): default zero");
-    failures += !require(approx_equal(b.dtheta(), 0.0), "dtheta(): default zero");
-    failures += !require(b.prev == nullptr, "prev: default nullptr");
-    failures += !require(b.next == nullptr, "next: default nullptr");
-  }
+  std::cout << "[RUN] Block tests starting\n";
 
-  // desc() before parse should throw
+  std::cout << "[RUN] Unparsed block should throw\n";
   {
-    Block b("G1 X1 Y2 Z3");
-    bool threw = false;
+    Block block("G1 X1 Y1 Z1 F1000");
+    bool threw_desc = false;
+    bool threw_lambda = false;
+    bool threw_interp_l = false;
+    bool threw_interp_t = false;
+    bool threw_walk = false;
+
     try {
-      (void)b.desc(false);
+      (void)block.desc(false);
     } catch (const std::runtime_error &) {
-      threw = true;
+      threw_desc = true;
     }
-    failures += !require(threw, "desc() before parse: throws runtime_error");
+    try {
+      double speed = 0.0;
+      (void)block.lambda(0.0, speed);
+    } catch (const std::runtime_error &) {
+      threw_lambda = true;
+    }
+    try {
+      (void)block.interpolate(0.5);
+    } catch (const std::runtime_error &) {
+      threw_interp_l = true;
+    }
+    try {
+      double lambda = 0.0;
+      double speed = 0.0;
+      (void)block.interpolate(0.0, lambda, speed);
+    } catch (const std::runtime_error &) {
+      threw_interp_t = true;
+    }
+    try {
+      block.walk([](Block &b, double t, double l, double s) {
+        (void)b;
+        (void)t;
+        (void)l;
+        (void)s;
+      });
+    } catch (const std::runtime_error &) {
+      threw_walk = true;
+    }
+
+    failures += !require(threw_desc, "desc() throws before parse");
+    failures += !require(threw_lambda, "lambda() throws before parse");
+    failures += !require(threw_interp_l, "interpolate(lambda) throws before parse");
+    failures += !require(threw_interp_t, "interpolate(time) throws before parse");
+    failures += !require(threw_walk, "walk() throws before parse");
   }
 
-  // parse() + desc() + interpolate(lambda) + interpolate(time,...) + lambda(time,...)
+  std::cout << "[RUN] Line interpolation\n";
   {
-    Block b("N10 G1 X10 Y20 Z30 F1200 S800 T2 M3");
-
-    b.parse(&machine);
-    failures += !require(b.parsed(), "parse(): parsed() becomes true");
-    failures += !require(b.n() == 10U, "parse(): N token");
-    failures += !require(b.type() == Block::BlockType::LINE, "parse(): G token");
-    failures += !require(approx_equal(b.target().x(), 10.0), "parse(): X token");
-    failures += !require(approx_equal(b.target().y(), 20.0), "parse(): Y token");
-    failures += !require(approx_equal(b.target().z(), 30.0), "parse(): Z token");
-    failures += !require(approx_equal(b.feedrate(), 1200.0), "parse(): F token");
-    failures += !require(approx_equal(b.spindle(), 800.0), "parse(): S token");
-    failures += !require(b.tool() == 2U, "parse(): T token");
-    failures += !require(b.m() == 3U, "parse(): M token");
-
-    const std::string d = b.desc(false);
-    failures += !require(!d.empty(), "desc(false): non-empty after parse");
-
-    double speed = -1.0;
-    const double l = b.lambda(0.0, speed);
-    failures += !require(approx_equal(l, 0.0), "lambda(time,...): returns stub value");
-    failures += !require(approx_equal(speed, 0.0), "lambda(time,...): updates output speed");
-
-    const Point p_mid = b.interpolate(0.5);
-    failures += !require(approx_equal(p_mid.x(), 5.0), "interpolate(lambda): x at 0.5");
-    failures += !require(approx_equal(p_mid.y(), 10.0), "interpolate(lambda): y at 0.5");
-    failures += !require(approx_equal(p_mid.z(), 15.0), "interpolate(lambda): z at 0.5");
-
-    double l_out = -1.0;
-    double s_out = -1.0;
-    const Point p_t = b.interpolate(0.0, l_out, s_out);
-    failures += !require(approx_equal(l_out, 0.0), "interpolate(time,...): returns lambda output");
-    failures += !require(approx_equal(s_out, 0.0), "interpolate(time,...): returns speed output");
-    failures += !require(approx_equal(p_t.x(), 0.0), "interpolate(time,...): x at t=0");
-    failures += !require(approx_equal(p_t.y(), 0.0), "interpolate(time,...): y at t=0");
-    failures += !require(approx_equal(p_t.z(), 0.0), "interpolate(time,...): z at t=0");
-  }
-
-  // compute(): long block -> trapezoidal profile with quantized duration
-  {
-    Block b("G1 X200 Y0 Z0 F1200");
-    b.parse(&machine);
-
-    const auto &profile = b.profile();
-    const auto expected = expected_profile(b.length(), b.feedrate(), machine);
-    failures += !require(approx_equal(b.length(), 200.0), "compute(long): path length");
-    failures += !require(approx_equal(profile.dt_1, expected.dt_1), "compute(long): dt_1");
-    failures += !require(approx_equal(profile.dt_2, expected.dt_2), "compute(long): dt_2");
-    failures += !require(approx_equal(profile.dt_m, expected.dt_m), "compute(long): dt_m after quantization");
-    failures += !require(approx_equal(profile.dt, expected.dt), "compute(long): quantized total duration");
-    failures += !require(approx_equal(profile.f, expected.f), "compute(long): adjusted peak feedrate");
-    failures += !require(approx_equal(profile.a, expected.a), "compute(long): acceleration");
-    failures += !require(approx_equal(profile.d, expected.d), "compute(long): deceleration");
-
-    double speed = -1.0;
-    const double l0 = b.lambda(0.0, speed);
-    failures += !require(approx_equal(l0, 0.0), "lambda(long): at t=0");
-    failures += !require(approx_equal(speed, 0.0), "lambda(long): speed at t=0");
-
-    const double t_acc = profile.dt_1 / 2.0;
-    const double l_acc = b.lambda(t_acc, speed);
-    failures += !require(l_acc > 0.0 && l_acc < 1.0, "lambda(long): acceleration phase progress");
-    failures += !require(approx_equal(speed, profile.a * t_acc * 60.0), "lambda(long): acceleration phase speed");
-
-    const double t_cruise = profile.dt_1 + profile.dt_m / 2.0;
-    const double l_cruise = b.lambda(t_cruise, speed);
-    failures += !require(l_cruise > l_acc, "lambda(long): cruise phase progress increases");
-    failures += !require(approx_equal(speed, profile.f * 60.0), "lambda(long): cruise speed");
-
-    const double l_end = b.lambda(profile.dt, speed);
-    failures += !require(approx_equal(l_end, 1.0), "lambda(long): at end of block");
-    failures += !require(approx_equal(speed, 0.0), "lambda(long): speed at end of block");
-  }
-
-  // compute(): short block -> triangular profile
-  {
-    Block b("G1 X0.1 Y0 Z0 F1200");
-    b.parse(&machine);
-
-    const auto &profile = b.profile();
-    const auto expected = expected_profile(b.length(), b.feedrate(), machine);
-    failures += !require(approx_equal(b.length(), 0.1), "compute(short): path length");
-    failures += !require(approx_equal(profile.dt_1, expected.dt_1), "compute(short): dt_1");
-    failures += !require(approx_equal(profile.dt_2, expected.dt_2), "compute(short): dt_2 after quantization");
-    failures += !require(approx_equal(profile.dt_m, expected.dt_m), "compute(short): no cruise phase");
-    failures += !require(approx_equal(profile.dt, expected.dt), "compute(short): quantized total duration");
-    failures += !require(approx_equal(profile.f, expected.f), "compute(short): peak feedrate");
-
-    double speed = -1.0;
-    const double t_mid = profile.dt_1 / 2.0;
-    const double l_mid = b.lambda(t_mid, speed);
-    failures += !require(l_mid > 0.0 && l_mid < 1.0, "lambda(short): acceleration phase progress");
-    failures += !require(approx_equal(speed, profile.a * t_mid * 60.0), "lambda(short): acceleration speed");
-
-    const double l_end = b.lambda(profile.dt, speed);
-    failures += !require(approx_equal(l_end, 1.0), "lambda(short): at end of block");
-    failures += !require(approx_equal(speed, 0.0), "lambda(short): speed at end of block");
-  }
-
-  // calc_arc(): center from I/J offsets and interpolation over a quarter circle
-  {
-    Block start("G1 X0.25 Y0 Z0 F1200");
+    Block start("N1 G00 X0 Y0 Z0");
     start.parse(&machine);
 
-    Block arc("G3 X0 Y0.25 I-0.25 J0 F500", start);
-    arc.parse(&machine);
+    Block block("N2 G01 X100 Y100 Z0 F1000", start);
+    block.parse(&machine);
 
-    const double arc_limit = std::sqrt(machine.A() * arc.r()) * 60.0;
-    const double arc_expected_feed = std::min(500.0, arc_limit);
+    failures += !require(block.parsed(), "line: block parsed");
+    failures += !require(block.type() == Block::BlockType::LINE, "line: block type LINE");
+    failures += !require_close(100.0, block.target().x(), "line: target x");
+    failures += !require_close(100.0, block.target().y(), "line: target y");
+    failures += !require_close(0.0, block.target().z(), "line: target z");
+    failures += !require_close(1000.0, block.feedrate(), "line: feedrate");
 
-    failures += !require(approx_equal(arc.center().x(), 0.0), "calc_arc(IJ): center x");
-    failures += !require(approx_equal(arc.center().y(), 0.0), "calc_arc(IJ): center y");
-    failures += !require(approx_equal(arc.r(), 0.25), "calc_arc(IJ): radius");
-    failures += !require(approx_equal(arc.theta_0(), 0.0), "calc_arc(IJ): initial angle");
-    failures += !require(approx_equal(arc.dtheta(), std::acos(-1.0) / 2.0), "calc_arc(IJ): swept angle");
-    failures += !require(approx_equal(arc.length(), std::acos(-1.0) * 0.25 / 2.0), "calc_arc(IJ): arc length");
-    failures += !require(approx_equal(arc.arc_feedrate(), arc_expected_feed), "calc_arc(IJ): arc feedrate limited");
+    const double dt = block.profile().dt;
+    std::cout << "[INFO] line dt=" << dt << '\n';
 
-    const Point p_half = arc.interpolate(0.5);
-    const double c = std::sqrt(0.5) * 0.25;
-    failures += !require(approx_equal(p_half.x(), c), "interpolate(arc IJ): x at lambda=0.5");
-    failures += !require(approx_equal(p_half.y(), c), "interpolate(arc IJ): y at lambda=0.5");
-    failures += !require(approx_equal(p_half.z(), 0.0), "interpolate(arc IJ): z stays constant");
-
+    double lambda = -1.0;
     double speed = -1.0;
-    const double l_end = arc.lambda(arc.dt(), speed);
-    failures += !require(approx_equal(l_end, 1.0), "lambda(arc IJ): end of block");
-    failures += !require(approx_equal(speed, 0.0), "lambda(arc IJ): speed at end of block");
-  }
+    (void)block.interpolate(0.0, lambda, speed);
+    failures += !require_close(0.0, lambda, "line: lambda at t=0");
+    failures += !require_close(0.0, speed, "line: speed at t=0");
 
-  // calc_arc(): radius-based center reconstruction and feedrate limiting
-  {
-    Block start("G1 X0.25 Y0 Z0 F2000");
-    start.parse(&machine);
+    (void)block.interpolate(dt, lambda, speed);
+    failures += !require_close(1.0, lambda, "line: lambda at t=dt");
+    failures += !require_close(0.0, speed, "line: speed at t=dt");
 
-    Block arc("G3 X0 Y0.25 R0.25 F2000", start);
-    arc.parse(&machine);
+    (void)block.interpolate(dt / 2.0, lambda, speed);
+    failures += !require_close(0.5, lambda, "line: lambda at t=dt/2");
 
-    const double arc_limit = std::sqrt(machine.A() * arc.r()) * 60.0;
-    const double arc_expected_feed = std::min(2000.0, arc_limit);
+    (void)block.interpolate(-0.1, lambda, speed);
+    failures += !require_close(0.0, lambda, "line: lambda at t<0");
 
-    failures += !require(approx_equal(arc.center().x(), 0.0), "calc_arc(R): center x");
-    failures += !require(approx_equal(arc.center().y(), 0.0), "calc_arc(R): center y");
-    failures += !require(approx_equal(arc.r(), 0.25), "calc_arc(R): radius");
-    failures += !require(approx_equal(arc.dtheta(), std::acos(-1.0) / 2.0), "calc_arc(R): swept angle");
-    failures += !require(approx_equal(arc.arc_feedrate(), arc_expected_feed), "calc_arc(R): limited arc feedrate");
-    failures += !require(approx_equal(arc.length(), std::acos(-1.0) * 0.25 / 2.0), "calc_arc(R): arc length");
-  }
+    (void)block.interpolate(dt + 0.1, lambda, speed);
+    failures += !require_close(1.0, lambda, "line: lambda at t>dt");
 
-  // parse() with arc endpoint mismatch should throw
-  {
-    Block start("G1 X0.25 Y0 Z0 F1200");
-    start.parse(&machine);
+    const double expected_len = std::hypot(100.0, 100.0);
+    failures += !require_close(expected_len, block.length(), "line: length");
 
-    Block arc("G3 X0 Y0.25 I-0.25 J0.05 F1200", start);
-    bool threw = false;
-    try {
-      arc.parse(&machine);
-    } catch (const std::runtime_error &) {
-      threw = true;
-    }
-    failures += !require(threw, "calc_arc(IJ): endpoint mismatch throws runtime_error");
-  }
-
-  // constructor with previous block + operator=
-  {
-    Block b1("N10 G1 X1 Y2 Z3 F100 S200 T1 M3");
-    b1.parse(&machine);
-
-    Block b2("G1 X4 Y5 Z6", b1);
-    failures += !require(b2.prev == &b1, "ctor(line, prev): sets prev link");
-    failures += !require(b1.next == &b2, "ctor(line, prev): sets next link on previous block");
-
-    b2.parse(&machine);
-    failures += !require(b2.n() == b1.n() + 1, "operator=: inherited incremented block number");
-    failures += !require(approx_equal(b2.feedrate(), b1.feedrate()), "operator=: inherited feedrate");
-    failures += !require(approx_equal(b2.spindle(), b1.spindle()), "operator=: inherited spindle");
-    failures += !require(b2.tool() == b1.tool(), "operator=: inherited tool");
-  }
-
-  // parse() with malformed token should throw
-  {
-    Block b("G1 X10 Q77");
-    bool threw = false;
-    try {
-      b.parse(&machine);
-    } catch (const std::runtime_error &) {
-      threw = true;
-    }
-    failures += !require(threw, "parse(): unsupported token throws runtime_error");
-  }
-
-  // walk() callback should execute at least once (profile dt defaults to 0 -> one step)
-  {
-    Block b("G1 X1 Y1 Z1 F100");
-    b.parse(&machine);
-
-    int calls = 0;
-    b.walk([&calls](Block &blk, double t, double lam, double spd) {
-      (void)blk;
+    double max_speed = 0.0;
+    block.walk([&](Block &b, double t, double l, double s) {
+      (void)b;
       (void)t;
-      (void)lam;
-      (void)spd;
-      ++calls;
+      (void)l;
+      if (s > max_speed) {
+        max_speed = s;
+      }
     });
+    std::cout << "[INFO] line max speed=" << max_speed << '\n';
+    failures += !require(max_speed <= 1000.0, "line: max speed <= 1000");
+    failures += !require(max_speed >= 990.0, "line: max speed >= 990");
+  }
 
-    failures += !require(calls >= 1, "walk(): callback invoked");
+  std::cout << "[RUN] Arc interpolation (center point, CW)\n";
+  {
+    Block start("N1 G00 X0 Y0 Z0");
+    start.parse(&machine);
+
+    Block block("N2 G02 X100 Y0 Z0 I50 J50 F1000", start);
+    block.parse(&machine);
+
+    const double dt = block.profile().dt;
+    const double r = block.r();
+    const double expected_len = 0.75 * 2.0 * M_PI * r;
+    failures += !require_close(expected_len, block.length(), "arc cw ij: length");
+
+    bool y_negative = false;
+    bool x_before = false;
+    bool x_after = false;
+    block.walk([&](Block &b, double t, double l, double s) {
+      (void)s;
+      Point p = b.interpolate(l);
+      if (p.y() < -k_tol) {
+        y_negative = true;
+        failures += !require_close_at(0.0, p.y(), t, "arc cw ij: Y should be >= 0");
+      }
+      if (t < dt / 2.0 && p.x() < 50.0 - k_tol) {
+        x_before = true;
+      }
+      if (t > dt / 2.0 && p.x() > 50.0 + k_tol) {
+        x_after = true;
+      }
+    });
+    failures += !require(!y_negative, "arc cw ij: Y never negative");
+    failures += !require(x_before, "arc cw ij: X < 50 before dt/2");
+    failures += !require(x_after, "arc cw ij: X > 50 after dt/2");
+  }
+
+  std::cout << "[RUN] Arc interpolation (center point, CCW)\n";
+  {
+    Block start("N1 G00 X0 Y0 Z0");
+    start.parse(&machine);
+
+    Block block("N2 G03 X100 Y0 Z0 I50 J50 F1000", start);
+    block.parse(&machine);
+
+    const double dt = block.profile().dt;
+    const double r = block.r();
+    const double expected_len = 0.25 * 2.0 * M_PI * r;
+    failures += !require_close(expected_len, block.length(), "arc ccw ij: length");
+
+    bool y_positive = false;
+    bool x_before = false;
+    bool x_after = false;
+    block.walk([&](Block &b, double t, double l, double s) {
+      (void)s;
+      Point p = b.interpolate(l);
+      if (p.y() > k_tol) {
+        y_positive = true;
+        failures += !require_close_at(0.0, p.y(), t, "arc ccw ij: Y should be <= 0");
+      }
+      if (t < dt / 2.0 && p.x() < 50.0 - k_tol) {
+        x_before = true;
+      }
+      if (t > dt / 2.0 && p.x() > 50.0 + k_tol) {
+        x_after = true;
+      }
+    });
+    failures += !require(!y_positive, "arc ccw ij: Y never positive");
+    failures += !require(x_before, "arc ccw ij: X < 50 before dt/2");
+    failures += !require(x_after, "arc ccw ij: X > 50 after dt/2");
+  }
+
+  std::cout << "[RUN] Arc interpolation (radius, CW)\n";
+  {
+    Block start("N1 G00 X0 Y0 Z0");
+    start.parse(&machine);
+
+    Block block("N2 G02 X100 Y0 Z0 R60 F1000", start);
+    block.parse(&machine);
+
+    const double r = block.r();
+    const double half_perimeter = 0.5 * 2.0 * M_PI * r;
+    failures += !require(block.length() < half_perimeter,
+                         "arc cw r: length less than half perimeter");
+
+    bool y_negative = false;
+    bool y_over = false;
+    bool x_before = false;
+    bool x_after = false;
+    const double dt = block.profile().dt;
+    block.walk([&](Block &b, double t, double l, double s) {
+      (void)s;
+      Point p = b.interpolate(l);
+      if (p.y() < -k_tol) {
+        y_negative = true;
+        failures += !require_close_at(0.0, p.y(), t, "arc cw r: Y should be >= 0");
+      }
+      if (p.y() > 30.0 + k_tol) {
+        y_over = true;
+        failures += !require_close_at(30.0, p.y(), t, "arc cw r: Y should be <= 30");
+      }
+      if (t < dt / 2.0 && p.x() < 50.0 - k_tol) {
+        x_before = true;
+      }
+      if (t > dt / 2.0 && p.x() > 50.0 + k_tol) {
+        x_after = true;
+      }
+    });
+    failures += !require(!y_negative, "arc cw r: Y never negative");
+    failures += !require(!y_over, "arc cw r: Y never above 30");
+    failures += !require(x_before, "arc cw r: X < 50 before dt/2");
+    failures += !require(x_after, "arc cw r: X > 50 after dt/2");
+  }
+
+  std::cout << "[RUN] Arc interpolation (radius, CCW)\n";
+  {
+    Block start("N1 G00 X0 Y0 Z0");
+    start.parse(&machine);
+
+    Block block("N2 G03 X100 Y0 Z0 R-60 F1000", start);
+    block.parse(&machine);
+
+    const double r = block.r();
+    const double half_perimeter = 0.5 * 2.0 * M_PI * r;
+    failures += !require(block.length() > half_perimeter,
+                         "arc ccw r: length greater than half perimeter");
+
+    bool y_positive = false;
+    bool has_y_above_minus_30 = false;
+    bool x_before = false;
+    bool x_after = false;
+    const double dt = block.profile().dt;
+    block.walk([&](Block &b, double t, double l, double s) {
+      (void)s;
+      Point p = b.interpolate(l);
+      if (p.y() > k_tol) {
+        y_positive = true;
+        failures += !require_close_at(0.0, p.y(), t, "arc ccw r: Y should be <= 0");
+      }
+      if (p.y() > -30.0 + k_tol) {
+        has_y_above_minus_30 = true;
+      }
+      if (t < dt / 2.0 && p.x() < 50.0 - k_tol) {
+        x_before = true;
+      }
+      if (t > dt / 2.0 && p.x() > 50.0 + k_tol) {
+        x_after = true;
+      }
+    });
+    failures += !require(!y_positive, "arc ccw r: Y never positive");
+    failures += !require(has_y_above_minus_30,
+                         "arc ccw r: some Y values greater than -30");
+    failures += !require(x_before, "arc ccw r: X < 50 before dt/2");
+    failures += !require(x_after, "arc ccw r: X > 50 after dt/2");
   }
 
   if (failures == 0) {

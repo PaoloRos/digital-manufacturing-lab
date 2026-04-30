@@ -24,16 +24,16 @@ using namespace cncpp;
 // LIFECYCLE ===================================================================
 
 Block::Block(string line) : _line(line), _n(0) {
-  cerr << log_tag(LogType::MESSAGE, cerr)
-       << " Block " << _line << " created" << endl;
+  //cerr << log_tag(LogType::MESSAGE, cerr)
+  //     << " Block " << _line << " created" << endl;
 }
 
 Block::Block(string line, Block &prev) : Block(line) { *this = prev; }
 
 Block::~Block()
 {
-  cerr << log_tag(LogType::MESSAGE, cerr)
-       << " Block " << _line << " destroyed" << endl;
+  //cerr << log_tag(LogType::MESSAGE, cerr)
+  //     << " Block " << _line << " destroyed" << endl;
 }
 
 string Block::desc(bool colored) const
@@ -456,43 +456,3 @@ int main() {
 }
 
 #endif // CNCPP_BLOCK_TEST_MAIN
-
-#ifdef CNCPP_BLOCK_UNIT_TESTS_EXERCISE
-
-#include <iostream>
-
-#include "defines.hpp"
-
-#define kEps 1e-4
-
-size_t errors_count = 0;
-
-using namespace std;
-using namespace cncpp;
-
-int main()
-{
-  Machine m{};
-
-  // Line interpolation test
-
-  // andrebbe fatto per ogni istruzione
-  try {
-  Block b1{"N1 g00 x0 y0 z0"};
-  Block b2{"N2 q01 x100 y100 z0 f1000", b1.parse(&m)};
-  b2.parse(&m);
-  cout << b1 << endl
-       << b2 << endl;
-  } catch (std::exception const &e) {
-    cerr << log_tag(LogType::WARNING) << " Errors count incremented: " << ++errors_count << endl;
-  }
-
-  // to be continued...
-
-
-
-  cerr << log_tag(LogType::WARNING) << " Total errors: " << errors_count << endl;
-  return (errors_count == 0) ? 0 : -1;
-}
-
-#endif // CNCPP_BLOCK_UNIT_TESTS_EXERCISE
