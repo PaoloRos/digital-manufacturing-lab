@@ -13,9 +13,11 @@ usr/
 *.dgraph
 /*.csv
 .Rproj.user
+.Rproj
 .vscode/
 
 # Misc
 *.log
 *.tmp
 .DS_Store
+.positai
