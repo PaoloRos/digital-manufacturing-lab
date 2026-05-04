@@ -18,20 +18,20 @@ Program::Program(string const &f, Machine *m) : _filename(f), _m(m)
 {
   load(_filename);
 
-  cerr << log_tag(LogType::MESSAGE, cerr)
-       << " Program " << _filename << " created" << endl;
-}
-
+  //cerr << log_tag(LogType::MESSAGE, cerr)
+  //     << " Program " << _filename << " created" << endl;
+} 
+  
 Program::Program(Machine *m) : _m(m)
 {
-  cerr << log_tag(LogType::MESSAGE, cerr)
-       << " Program created with no source file" << endl;
+  //cerr << log_tag(LogType::MESSAGE, cerr)
+  //     << " Program created with no source file" << endl;
 }
 
 Program::~Program()
 {
-  cerr << log_tag(LogType::MESSAGE, cerr)
-       << " Program " << _filename << " destroyed" << endl;
+  //cerr << log_tag(LogType::MESSAGE, cerr)
+  //     << " Program " << _filename << " destroyed" << endl;
 }
 
 string Program::desc(bool colored) const 
@@ -68,11 +68,11 @@ void Program::load(string const &f, bool append)
 
 Program &Program::operator<<(string const &line)
 {
-  if (this->size() > 0) {                   // not the first block
+  if (this->size() > 0)                     // not the first block
     this->emplace_back(line, this->back()); // create a new object at the end of the list, using the constructor with modal inheritance
-  } else {                                  // first block
+  else                                      // first block
     this->emplace_back(line);               // create a new object at the end of the list, using the constructor WITHOUT modal inheritance
-  }
+  
   this->back().parse(_m);
   return *this;
 }
@@ -88,7 +88,6 @@ block_iterator Program::load_next()
   return _current;
 }
 
-// Move the current block at the begining
 void Program::rewind()
 {
   _current = this->begin();
@@ -136,18 +135,18 @@ int main(int argc, const char *argv[]) {
   cout << "n,t_tot,t,lambda,s,x,y,z" << endl;
   // Loop over all the blocks here:
   data_t t_tot = 0.0;
-  for (auto &block : program) {
-    // skip rapid/nomotion blocks because those are not interpolated
-    if (block.type() == Block::BlockType::RAPID || block.type() == Block::BlockType::NO_MOTION) continue;
-    // loop within a block
-    block.walk([&](Block &b, data_t t, data_t l, data_t s) {
-      Point pos = b.interpolate(l);
-      cout << format("{:},{:},{:},{:},{:},{:},{:},{:}", b.n(), t_tot, t, l, s,
-                    pos.x(), pos.y(), pos.z())
-          << endl;
-      t_tot += machine.tq();
-    });
-  }
+  //for (auto &block : program) {
+  //  // skip rapid/nomotion blocks because those are not interpolated
+  //  if (block.type() == Block::BlockType::RAPID || block.type() == Block::BlockType::NO_MOTION) continue;
+  //  // loop within a block
+  //  block.walk([&](Block &b, data_t t, data_t l, data_t s) {
+  //    Point pos = b.interpolate(l);
+  //    cout << format("{:},{:},{:},{:},{:},{:},{:},{:}", b.n(), t_tot, t, l, s,
+  //                  pos.x(), pos.y(), pos.z())
+  //        << endl;
+  //    t_tot += machine.tq();
+  //  });
+  //}
 
   return EXIT_SUCCESS;
 }
