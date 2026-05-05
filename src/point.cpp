@@ -94,7 +94,7 @@ std::vector<data_t> Point::vec() const
   if(!is_complete())
     throw runtime_error("Cannot convert to vector: incomplete point!");
   
-    return {_x.value(), _y.value(), _z.value()};
+  return {_x.value(), _y.value(), _z.value()};
 }
 
 // ====== STATIC DEFINITIONS ======

@@ -135,14 +135,22 @@ class Machine : public Object {
    */
   Point position(Point p) { return _position = p; }
 
+  nlohmann::json _data() const { return _data; }
+
   private:
+  nlohmann::json _data{};
+
+  // Properties
   Point _zero{0.0, 0.0, 0.0};   // machine reference point (origin)
   Point _offset{0.0, 0.0, 0.0}; // offset of the workpiece origin from the machine reference point
-  Point _setpoint, _position;   // current setpoint and actual position
   data_t _tq = 0.001;           // (ms) control period in seconds (quantization step for time)
   data_t _A = 5.0;              // maximum acceleration in mm/s^2
   data_t _fmax = 10000.0;       // maximum feedrate in mm/min
   data_t _max_error = 0.005;    // maximum allowed positioning error in mm
+  
+  // State parameters
+  Point _setpoint, _position;   // current setpoint and actual position
+  
   data_t _error = 0.0;          // current positioning error in mm
 };  // class Machine
 

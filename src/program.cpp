@@ -14,7 +14,7 @@ using namespace cncpp;
 
 // LIFECYCLE ===================================================================
 
-Program::Program(string const &f, Machine *m) : _filename(f), _m(m)
+Program::Program(string const &f, Machine *m) : _m(m), _filename(f)
 {
   load(_filename);
 
