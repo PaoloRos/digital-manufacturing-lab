@@ -1,0 +1,47 @@
+# Graphviz format for a FSM class
+
+# Directed graph -> graph with arrows (with connetions: source <-> target)
+# option in square brackets
+digraph "CNC" {
+  # --- list of states ---
+  init [label = "Init" peripheries = 2]
+  idle [label = "Idle"]
+
+  # the machine in idle state is expecting an input from the user to enter in one of the following states
+  load_block  # load a G-code block at a time
+  rapid_motion
+  interp_motion
+  no_motion
+  stop [peripheries=2]
+  go_to_zero
+
+  # --- list of transitions ---
+  init -> idle
+  # error in initialization
+  init -> stop
+  idle -> idle
+  idle -> load_block [label="reset"]
+
+  load_block -> no_motion
+  no_motion -> load_block
+
+  load_block -> rapid_motion [label="begin_rapid"]
+  rapid_motion -> rapid_motion
+  rapid_motion -> load_block [label="end_rapid"]
+
+
+  load_block -> interp_motion [label="begin_interp"]
+  interp_motion -> interp_motion 
+  interp_motion -> load_block [label="end_interp"]
+
+  # end program
+  load_block -> idle
+  
+  idle -> stop
+  
+  # reset program
+  # note: go_to_zero is the same motion of rapid one
+  idle -> go_to_zero
+  go_to_zero -> go_to_zero [label="begin_rapid"]
+  go_to_zero -> idle [label="end_rapid"]
+}
