@@ -15,8 +15,8 @@ Date: 2026-04-25
 #pragma once
 #include "defines.hpp"
 #include "point.hpp"
-
 #include <nlohmann/json.hpp>
+#include <toml++/toml.hpp>
 
 namespace cncpp {
 
@@ -55,6 +55,8 @@ class Machine : public Object {
    * @param j JSON document containing machine configuration.
    */
   void load(nlohmann::json &j);
+  
+  void load(toml::table &t);
   /**
    * @brief Load machine configuration from a JSON file.
    * @param filename Path to the JSON configuration file.

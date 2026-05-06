@@ -78,6 +78,12 @@ FetchContent_Declare(yaml-cpp
   GIT_TAG HEAD
 )
 
+FetchContent_Declare(tomlplusplus
+  GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+  GIT_SHALLOW    TRUE
+  GIT_TAG v3.4.0
+)
+
 
 set(DOCUMENTATION OFF CACHE BOOL "")
 set(INC_BRIDGE_SUPPORT OFF CACHE BOOL "")
@@ -93,7 +99,7 @@ FetchContent_Declare(mosquitto
   GIT_TAG v2.0.20
 )
 
-FetchContent_MakeAvailable(fmt rang json yaml-cpp mosquitto)
+FetchContent_MakeAvailable(fmt rang json yaml-cpp tomlplusplus mosquitto)
 
 message(STATUS "Dependencies fetched.")
 
@@ -102,6 +108,7 @@ include_directories(
   ${rang_SOURCE_DIR}/include
   ${json_SOURCE_DIR}/include
   ${yaml-cpp_SOURCE_DIR}/include
+  ${tomlplusplus_SOURCE_DIR}/include
   # /opt/homebrew/include
 )
 
