@@ -55,7 +55,11 @@ class Machine : public Object {
    * @param j JSON document containing machine configuration.
    */
   void load(nlohmann::json &j);
-  
+
+  /**
+   * @brief Load machine configuration from TOML data.
+   * @param t TOML table containing machine configuration.
+   */
   void load(toml::table &t);
   /**
    * @brief Load machine configuration from a JSON file.
@@ -137,6 +141,10 @@ class Machine : public Object {
    */
   Point position(Point p) { return _position = p; }
 
+  /**
+   * @brief Get the raw configuration data as JSON.
+   * @return Stored JSON configuration data.
+   */
   nlohmann::json data() const { return _data; }
 
   private:

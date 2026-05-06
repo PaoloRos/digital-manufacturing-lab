@@ -84,27 +84,32 @@ void Machine::load(json &j)
 
 void Machine::load(toml::table &t) {
   if (t.contains("tq")) {
-    if (!t["tq"].is_floating_point()) throw runtime_error("tq is not a number");
+    if (!t["tq"].is_floating_point()) 
+      throw invalid_argument("Machine parameter 'tq' must be a number");
     _tq = t["tq"].value_or(_tq);
   }
   if (t.contains("A")) {
-    if (!t["A"].is_floating_point()) throw runtime_error("A is not a number");
+    if (!t["A"].is_floating_point()) 
+      throw invalid_argument("Machine parameter 'A' must be a number");
     _A = t["A"].value_or(_A);
   }
   if (t.contains("fmax")) {
-    if (!t["fmax"].is_floating_point()) throw runtime_error("fmax is not a number");
+    if (!t["fmax"].is_floating_point()) 
+      throw invalid_argument("Machine parameter 'fmax' must be a number");
     _fmax = t["fmax"].value_or(_fmax);
   }
   if (t.contains("max_error")) {
-    if (!t["max_error"].is_floating_point()) throw runtime_error("max_error is not a number");
+    if (!t["max_error"].is_floating_point()) 
+      throw invalid_argument("Machine parameter 'max_error' must be a number");
     _max_error = t["max_error"].value_or(_max_error);
   }
   if (t.contains("zero")) {
     auto zero = t["zero"];
     if (!zero.is_array() || zero.as_array()->size() != 3)
-      throw runtime_error("zero must be an array of three numbers");
+      throw invalid_argument("Machine parameter 'zero' must be an array of three numbers");
     for (auto &v : *zero.as_array()) {
-      if (!v.is_floating_point()) throw runtime_error("zero has a non-numerical value");
+      if (!v.is_floating_point()) 
+        throw invalid_argument("Machine parameter 'zero' has a non-numerical value");
     }
     _zero.x(zero[0].value_or(_zero.x()));
     _zero.y(zero[1].value_or(_zero.y()));
@@ -113,9 +118,10 @@ void Machine::load(toml::table &t) {
   if (t.contains("offset")) {
     auto offset = t["offset"];
     if (!offset.is_array() || offset.as_array()->size() != 3)
-      throw runtime_error("offset must be an array of three numbers");
+      throw invalid_argument("Machine parameter 'offset' must be an array of three numbers");
     for (auto &v : *offset.as_array()) {
-      if (!v.is_floating_point()) throw runtime_error("offset has a non-numerical value");
+      if (!v.is_floating_point()) 
+        throw invalid_argument("Machine parameter 'offset' has a non-numerical value");
     }
     _offset.x(offset[0].value_or(_offset.x()));
     _offset.y(offset[1].value_or(_offset.y()));
