@@ -58,7 +58,7 @@ void Machine::load(json &j)
     _max_error = _data["max_error"];
   }
   if (_data.contains("zero")) {
-    if (!_data["zero"].is_array() || !_data["zero"].size()!=3)
+    if (!_data["zero"].is_array() || _data["zero"].size()!=3)
       throw invalid_argument("Machine parameter 'zero' must be an array of 3 numbers");
     for (auto &v : _data["zero"]) {
       if (!v.is_number()) 
@@ -69,7 +69,7 @@ void Machine::load(json &j)
     _zero.z(_data["zero"][2]);
   }
   if (_data.contains("offset")) {
-    if (!_data["offset"].is_array() || !_data["offset"].size()!=3)
+    if (!_data["offset"].is_array() || _data["offset"].size()!=3)
       throw invalid_argument("Machine parameter 'offset' must be an array of 3 numbers");
     for (auto &v : _data["offset"]) {
       if (!v.is_number()) 
@@ -96,25 +96,41 @@ data_t Machine::quantize(data_t t, data_t &dq) const
   return q;
 }
 
-#ifdef CNCPP_TEST_MACHINE
+/*
+ _____         _     __  __       _       
+|_   _|__  ___| |_  |  \/  | __ _(_)_ __  
+  | |/ _ \/ __| __| | |\/| |/ _` | | '_ \ 
+  | |  __/\__ \ |_  | |  | | (_| | | | | |
+  |_|\___||___/\__| |_|  |_|\__,_|_|_| |_|
+                                          
+*/
+
+#ifdef CNCPP_MACHINE_TEST_MAIN
 #include <iostream>
 
 int main(int argc, const char **argv) {
   if (argc != 2) {
-    cerr << "Usage: " << argv[0] << " <machine.json>" << endl;
+    cerr << log_tag(LogType::ERROR) << " Usage: " << argv[0] << " <machine.json>" << endl;
     return EXIT_FAILURE;
   }
   string filename{argv[1]};
-  Machine m{filename};
-  cout << "Parsed JSON data structure: " << endl
+  Machine m{};
+  try {
+    m = Machine(filename);
+  } catch (const exception &e) {
+    cerr << log_tag(LogType::ERROR) << e.what() << endl;
+    return EXIT_FAILURE;
+  }
+  
+  cout << log_tag(LogType::MESSAGE) << " Parsed JSON data structure: " << endl
        << m.data().dump(2) << endl;
 
-  cout << "Machine parameters: " << endl << m << endl;
-
+  cout << log_tag(LogType::MESSAGE)
+       << "Machine parameters: " << endl << m << endl;
 
   return 0;
 }
 
 
 
-#endif // CNCPP_TEST_MACHINE
+#endif // CNCPP_MACHINE_TEST_MAIN

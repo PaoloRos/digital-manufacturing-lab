@@ -196,6 +196,12 @@ if(BUILD_QUICK_TESTS)
   target_compile_definitions(program_test PRIVATE CNCPP_PROGRAM_TEST_MAIN)
   target_link_libraries(program_test PRIVATE cncpp fmt::fmt)
   set_target_properties(program_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
+
+  # Machine test
+  add_executable(machine_test ${SRC_DIR}/machine.cpp)
+  target_compile_definitions(machine_test PRIVATE CNCPP_MACHINE_TEST_MAIN)
+  target_link_libraries(machine_test PRIVATE cncpp fmt::fmt)
+  set_target_properties(machine_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
 endif()
 
 

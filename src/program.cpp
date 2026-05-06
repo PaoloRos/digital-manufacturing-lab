@@ -115,38 +115,50 @@ void Program::reset()
 using namespace fmt;
 
 int main(int argc, const char *argv[]) {
-  if (argc != 2) {
-    cerr << log_tag(LogType::ERROR) << " Usage: " << argv[0] << "<file.g>" << endl;
+  if (argc != 3) {
+    cerr << log_tag(LogType::ERROR) << " Usage: " << argv[0] << " <machine.json> <file.g>" << endl;
     return EXIT_FAILURE;
   }
 
+  string machine_data{argv[1]};
+
   Machine machine{};
+  try {
+    machine = Machine(machine_data);
+  } catch (const exception &e) {
+    cerr << log_tag(LogType::ERROR) << e.what() << endl;
+    return EXIT_FAILURE;
+  }
+
+  cerr << log_tag(LogType::MESSAGE) << " Machine parameters: " << endl << machine << endl;
+
   Program program{&machine};
   try {
-    program.load(argv[1]);
+    program.load(argv[2]);
   } catch (exception &e) {
     cerr << log_tag(LogType::ERROR) << " Failed to load program: " << e.what() << endl;
     return EXIT_FAILURE;
   }
 
-  cerr << program << endl;
+  cerr << log_tag(LogType::MESSAGE) << " Program summary: " << endl
+       << program << endl;
 
-  cerr << "Sequence of position (to stdout only):" << endl;
+  cerr << log_tag(LogType::MESSAGE) << "Sequence of position (to stdout only):" << endl;
   cout << "n,t_tot,t,lambda,s,x,y,z" << endl;
   // Loop over all the blocks here:
   data_t t_tot = 0.0;
-  //for (auto &block : program) {
-  //  // skip rapid/nomotion blocks because those are not interpolated
-  //  if (block.type() == Block::BlockType::RAPID || block.type() == Block::BlockType::NO_MOTION) continue;
-  //  // loop within a block
-  //  block.walk([&](Block &b, data_t t, data_t l, data_t s) {
-  //    Point pos = b.interpolate(l);
-  //    cout << format("{:},{:},{:},{:},{:},{:},{:},{:}", b.n(), t_tot, t, l, s,
-  //                  pos.x(), pos.y(), pos.z())
-  //        << endl;
-  //    t_tot += machine.tq();
-  //  });
-  //}
+  for (auto &block : program) {
+    // skip rapid/nomotion blocks because those are not interpolated
+    if (block.type() == Block::BlockType::RAPID || block.type() == Block::BlockType::NO_MOTION) continue;
+    // loop within a block
+    block.walk([&](Block &b, data_t t, data_t l, data_t s) {
+      Point pos = b.interpolate(l);
+      cout << format("{:},{:},{:},{:},{:},{:},{:},{:}", b.n(), t_tot, t, l, s,
+                    pos.x(), pos.y(), pos.z())
+          << endl;
+      t_tot += machine.tq();
+    });
+  }
 
   return EXIT_SUCCESS;
 }

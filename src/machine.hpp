@@ -135,7 +135,7 @@ class Machine : public Object {
    */
   Point position(Point p) { return _position = p; }
 
-  nlohmann::json _data() const { return _data; }
+  nlohmann::json data() const { return _data; }
 
   private:
   nlohmann::json _data{};
