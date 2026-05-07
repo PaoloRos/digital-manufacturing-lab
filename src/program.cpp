@@ -90,7 +90,7 @@ block_iterator Program::load_next()
 
 void Program::rewind()
 {
-  _current = this->begin();
+  _current = this->end();
   _done = false;
 }
 

@@ -86,6 +86,11 @@ class Machine : public Object {
    */
   data_t tq() const { return _tq; }
   /**
+   * @brief Get maximum machine control period.
+   * @return Time quantum in seconds.
+   */
+  data_t tq_max() const { return _tq_max; }
+  /**
    * @brief Get machine maximum feedrate.
    * @return Maximum feedrate value.
    */
@@ -154,6 +159,7 @@ class Machine : public Object {
   Point _zero{0.0, 0.0, 0.0};   // machine reference point (origin)
   Point _offset{0.0, 0.0, 0.0}; // offset of the workpiece origin from the machine reference point
   data_t _tq = 0.001;           // (ms) control period in seconds (quantization step for time)
+  data_t _tq_max = 0.01;        // maximum allowed control period in seconds (for safety)
   data_t _A = 5.0;              // maximum acceleration in mm/s^2
   data_t _fmax = 10000.0;       // maximum feedrate in mm/min
   data_t _max_error = 0.005;    // maximum allowed positioning error in mm

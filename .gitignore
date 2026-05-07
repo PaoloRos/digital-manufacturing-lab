@@ -14,8 +14,9 @@ usr/
 /*.csv
 *.Rproj
 .Rproj.user
-.Rhistory
+.Rproj
 .RData
+.Rhistory
 .vscode/
 .venv
 imgui.ini

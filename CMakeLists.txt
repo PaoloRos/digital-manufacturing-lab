@@ -83,12 +83,6 @@ FetchContent_Declare(keystroker
   GIT_TAG HEAD
 )
 
-FetchContent_Declare(keystroker
-  GIT_REPOSITORY https://github.com/pbosetti/keystroker.git
-  GIT_SHALLOW    TRUE
-  GIT_TAG HEAD
-)
-
 FetchContent_MakeAvailable(fmt rang json toml keystroker)
 
 message(STATUS "Dependencies fetched.")
@@ -172,6 +166,7 @@ file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 add_library(cncpp STATIC ${SRC_FILES})
 target_include_directories(cncpp PUBLIC ${SRC_DIR})
 target_link_libraries(cncpp PUBLIC fmt::fmt)
+target_compile_definitions(cncpp PRIVATE CNCPP_TEST_PROGRAM_MAIN)
 
 if(BUILD_TESTING)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
@@ -205,9 +200,8 @@ if(BUILD_QUICK_TESTS)
   set_target_properties(machine_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
 endif()
 
-#add_executable(cnc ${SRC_DIR}/main/cnc.cpp)
-#target_link_libraries(cnc PRIVATE cncpp Mads::mads keystroker rang)
-
+add_executable(cnc ${SRC_DIR}/main/cnc.cpp)
+target_link_libraries(cnc PRIVATE cncpp Mads::Mads keystroker rang fmt)
 
 #   ___           _        _ _
 #  |_ _|_ __  ___| |_ __ _| | |
