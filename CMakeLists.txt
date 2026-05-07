@@ -83,6 +83,12 @@ FetchContent_Declare(keystroker
   GIT_TAG HEAD
 )
 
+FetchContent_Declare(keystroker
+  GIT_REPOSITORY https://github.com/pbosetti/keystroker.git
+  GIT_SHALLOW    TRUE
+  GIT_TAG HEAD
+)
+
 FetchContent_MakeAvailable(fmt rang json toml keystroker)
 
 message(STATUS "Dependencies fetched.")
@@ -198,6 +204,9 @@ if(BUILD_QUICK_TESTS)
   target_link_libraries(machine_test PRIVATE cncpp fmt::fmt)
   set_target_properties(machine_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${QUICK_TEST_OUTPUT_DIR}")
 endif()
+
+#add_executable(cnc ${SRC_DIR}/main/cnc.cpp)
+#target_link_libraries(cnc PRIVATE cncpp Mads::mads keystroker rang)
 
 
 #   ___           _        _ _
