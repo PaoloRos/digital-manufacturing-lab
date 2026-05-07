@@ -1,0 +1,7 @@
+[machine]
+zero = [0.0, 0.0, 0.0]  # Workpiece origin in machine coordinates (mm)
+offset = [0.0, 0.0, 0.0] # Offset of the workpiece origin from the machine reference point (mm)
+tq = 0.003 # s
+tq_max = 0.03 # s
+A = 10.0
+fmax = 1000.0

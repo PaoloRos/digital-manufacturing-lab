@@ -15,3 +15,16 @@ This project is based on the reference repository provided for the course:
   * we use the **finite state machine**
 
   * IoT Techs needed to communicate with the machine
+
+
+  * per stoppare qualcosa
+
+  kill -SIGINT PID
+
+  cmake -S . -B build -G Ninja --log-level=VERBOSE
+
+
+  ctr+z -> pausing
+  bg -> resume in backgraund
+  fg -> resume in foreground
+  kill
