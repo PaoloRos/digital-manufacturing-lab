@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
+  set(CMAKE_POLICY_VERSION_MINIMUM "3.5")
+endif()
+
 set(VERSION "0.0.1")
 project(CNCpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -9,9 +14,6 @@ project(CNCpp VERSION ${VERSION} LANGUAGES CXX)
 #  |____/ \___|\__|   \_/ \__,_|_|  |___/
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
-  set(CMAKE_POLICY_VERSION_MINIMUM "3.5")
-endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
@@ -40,7 +42,6 @@ message(STATUS "SRC_DIR: ${SRC_DIR}")
 message(STATUS "MAIN_DIR: ${MAIN_DIR}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 file(GLOB SRC_FILES ${SRC_DIR}/*.cpp)
-list(FILTER SRC_FILES EXCLUDE REGEX ".*/_.*\\.cpp$")
 
 
 #   _____         _   ____            _
@@ -71,19 +72,34 @@ FetchContent_Declare(rang
   GIT_SHALLOW    TRUE
 )
 
-FetchContent_Declare(toml
-  GIT_REPOSITORY https://github.com/pbosetti/tomlplusplus.git
-  GIT_TAG master
-  GIT_SHALLOW TRUE
-)
-
-FetchContent_Declare(keystroker
-  GIT_REPOSITORY https://github.com/pbosetti/keystroker.git
+FetchContent_Declare(yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
   GIT_SHALLOW    TRUE
   GIT_TAG HEAD
 )
 
-FetchContent_MakeAvailable(fmt rang json toml keystroker)
+FetchContent_Declare(tomlplusplus
+  GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+  GIT_SHALLOW    TRUE
+  GIT_TAG v3.4.0
+)
+
+
+set(DOCUMENTATION OFF CACHE BOOL "")
+set(INC_BRIDGE_SUPPORT OFF CACHE BOOL "")
+set(WITH_APPS OFF CACHE BOOL "")
+set(WITH_CLIENTS OFF CACHE BOOL "")
+set(WITH_PIC ON CACHE BOOL "")
+set(WITH_STATIC_LIBRARIES ON CACHE BOOL "")
+set(WITH_TLS OFF CACHE BOOL "")
+set(WITH_LIB_CPP ON CACHE BOOL "")
+FetchContent_Declare(mosquitto
+  GIT_REPOSITORY https://github.com/eclipse-mosquitto/mosquitto.git
+  GIT_SHALLOW    TRUE
+  GIT_TAG v2.0.20
+)
+
+FetchContent_MakeAvailable(fmt rang json yaml-cpp tomlplusplus mosquitto)
 
 message(STATUS "Dependencies fetched.")
 
@@ -91,15 +107,10 @@ include_directories(
   ${fmt_SOURCE_DIR}/include
   ${rang_SOURCE_DIR}/include
   ${json_SOURCE_DIR}/include
-  ${toml_SOURCE_DIR}/include
-  ${keystroker_SOURCE_DIR}/include
+  ${yaml-cpp_SOURCE_DIR}/include
+  ${tomlplusplus_SOURCE_DIR}/include
   # /opt/homebrew/include
 )
-
-add_compile_options(-Wno-deprecated-literal-operator)
-
-find_package(Mads REQUIRED)
-message(STATUS "Found Mads: ${Mads_DIR}")
 
 #    ____             __ _                          _    __ _ _
 #   / ___|___  _ __  / _(_) __ _ _   _ _ __ ___  __| |  / _(_) | ___  ___
@@ -161,6 +172,7 @@ endif()
 #                 |___/
 
 # main Library
+file(GLOB SRC_FILES ${SRC_DIR}/*.cpp)
 file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 
 add_library(cncpp STATIC ${SRC_FILES})
