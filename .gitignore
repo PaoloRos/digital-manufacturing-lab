@@ -16,6 +16,8 @@ usr/
 .Rproj
 .Rhistory
 .vscode/
+.venv
+imgui.ini
 
 # Misc
 *.log
