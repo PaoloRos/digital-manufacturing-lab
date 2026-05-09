@@ -24,10 +24,10 @@ std::string Machine::desc(bool colored) const
 {
   stringstream ss;
   ss << "A = " << _A << ", "
-     << "tp = " << _tq << ", "
-     << "tp_max = " << _tq_max << ", "
+     << "tq = " << _tq << ", "
+     << "tq_max = " << _tq_max << ", "
      << "max_error = " << _max_error << ", "
-     << "fmax = " << _fmax
+     << "fmax = " << _fmax << ", "
      << "zero = " << _zero.desc(colored) << ", "
      << "offset = " << _offset.desc(colored) << endl;
   return ss.str();
@@ -89,6 +89,11 @@ void Machine::load(json &j)
 }
 
 void Machine::load(toml::table &t) {
+  if (t.contains("tq")) {
+    if (!t["tq"].is_floating_point()) 
+      throw invalid_argument("Machine parameter 'tq' must be a number");
+    _tq = t["tq"].value_or(_tq);
+  }
   if (t.contains("tq_max")) {
     if (!t["tq_max"].is_floating_point()) 
       throw invalid_argument("Machine parameter 'tq_max' must be a number");

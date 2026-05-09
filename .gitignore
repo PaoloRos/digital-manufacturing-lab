@@ -14,7 +14,6 @@ usr/
 /*.csv
 *.Rproj
 .Rproj.user
-.Rproj
 .RData
 .Rhistory
 .vscode/
