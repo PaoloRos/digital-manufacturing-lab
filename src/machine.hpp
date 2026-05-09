@@ -82,12 +82,12 @@ class Machine : public Object {
   data_t A() const { return _A; }
   /**
    * @brief Get machine control period.
-   * @return Time quantum in seconds.
+   * @return Quantization period in seconds.
    */
   data_t tq() const { return _tq; }
   /**
-   * @brief Get maximum machine control period.
-   * @return Time quantum in seconds.
+   * @brief Gets the max machine sampling period.
+   * @return Quantization period in seconds.
    */
   data_t tq_max() const { return _tq_max; }
   /**
