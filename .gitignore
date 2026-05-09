@@ -15,10 +15,17 @@ usr/
 .Rproj.user
 .Rproj
 .Rhistory
+.RData
 .vscode/
+.venv
+imgui.ini
 
 # Misc
 *.log
 *.tmp
 .DS_Store
 .positai
+
+# R wrapper
+R/**/*.html
+R/**/*_files/

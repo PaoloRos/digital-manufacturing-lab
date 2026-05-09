@@ -1,2 +1,18 @@
-// Main header for the project. This file includes all the other headers, so
-// that we can include only this one in our source files. Typically with the name of the project.
+/*
+  ____ _   _  ____ ____  ____  
+ / ___| \ | |/ ___|  _ \|  _ \ 
+| |   |  \| | |   | |_) | |_) |
+| |___| |\  | |___|  __/|  __/ 
+ \____|_| \_|\____|_|   |_|    
+                               
+Main include file
+*/
+
+#pragma once
+
+// CNCPP own headers ===========================================================
+#include "block.hpp"
+#include "defines.hpp"
+#include "machine.hpp"
+#include "point.hpp"
+#include "program.hpp"

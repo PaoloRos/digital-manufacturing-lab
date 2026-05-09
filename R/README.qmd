@@ -57,6 +57,8 @@ Example:
 library(cncppr)
 library(tidyverse)
 
+pwd = "/Users/paolorossi/Develop/dev_universita/dm-cncpp/cncpp/"
+
 p <- Point(1, 2, 3)
 point_length(p)
 
@@ -70,7 +72,7 @@ block_summary(b1)
 head(block_walk(b1))
 
 m <- Machine()
-prg <- Program("test.g", m)
+prg <- Program(paste0(pwd, "progr-files/test.g"), m)
 df <- program_walk(prg)
 df %>%
   ggplot(aes(x=time, y=lambda)) +
