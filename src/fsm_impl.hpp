@@ -263,7 +263,13 @@ state_t do_stop(T &data) {
 // 1. from idle to load_block
 template<class T>
 void reset(T &data) {
-  /* Your Code Here */
+  // Rewind program, be sure to start from the beginning
+  data.program->rewind();
+  // Reset timings
+  data.t_tot = 0;
+  data.t_blk = 0;
+  // Print header line for the CSV output
+  cout << "n,type,t_to,t_blk,lambda,s,feedrate,acc,xn,yn,zn,x,y,z" << endl;
 }
 
 // This function is called in 2 transitions:
@@ -271,7 +277,8 @@ void reset(T &data) {
 // 2. from go_to_zero to go_to_zero
 template<class T>
 void begin_rapid(T &data) {
-  /* Your Code Here */
+  // Reset block time
+  data.t_blk = 0;
 }
 
 // This function is called in 2 transitions:
@@ -286,7 +293,8 @@ void end_rapid(T &data) {
 // 1. from load_block to interp_motion
 template<class T>
 void begin_interp(T &data) {
-  /* Your Code Here */
+  // Reset block time
+  data.t_blk = 0;
 }
 
 // This function is called in 1 transition:
