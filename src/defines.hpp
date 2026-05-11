@@ -64,6 +64,7 @@ enum class LogType {
   COMPUTATION,
   WARNING,
   ERROR,
+  PROMPT,
 };
 
 /**
@@ -91,6 +92,8 @@ inline std::string log_tag(LogType type, std::ostream &os = std::cerr)
     return fmt::format(fmt::fg(fmt::color::gold) | fmt::emphasis::bold, "[Warning]");
   case LogType::ERROR:
     return fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[Error]");
+  case LogType::PROMPT:
+    return fmt::format(fmt::fg(fmt::color::cyan) | fmt::emphasis::bold, "[Prompt]");
   default:
     throw std::runtime_error("Unsupported cncpp::LogType value");
   }

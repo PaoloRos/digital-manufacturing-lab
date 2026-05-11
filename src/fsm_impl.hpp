@@ -13,8 +13,16 @@ The finite state machine has:
 
 ******************************************************************************/
     
+#include "cncpp.hpp"
+#include <rang.hpp>
+#include <fmt/format.h>
+#include <keystroker.h>
+
 using namespace std;
-    
+using namespace fmt;
+using namespace rang;
+
+
 // SEARCH FOR Your Code Here FOR CODE INSERTION POINTS!
 
 
@@ -37,9 +45,16 @@ namespace cncpp {
 // valid return states: STATE_IDLE, STATE_STOP
 template<class T> 
 state_t do_init(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
-  
+  state_t next_state = cncpp::STATE_IDLE;
+  // Try to load the program, if it fails, transition to STOP state
+  try{
+    data.program = make_unique<cncpp::Program>(data.program_file, data.machine.get());
+    cerr << log_tag(LogType::MESSAGE) << " Program loaded: " << endl
+         << *data.program << endl;
+  } catch (exception const &e) {
+    cerr << log_tag(LogType::ERROR) << " Error loading program: " << e.what() << endl;
+    next_state = cncpp::STATE_STOP;
+  }
   return next_state;
 }
 
@@ -48,9 +63,46 @@ state_t do_init(T &data) {
 // SIGINT triggers an emergency transition to STATE_STOP
 template<class T> 
 state_t do_idle(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
-  
+  state_t next_state = cncpp::NO_CHANGE;
+  // STEPS =====================================================================
+
+  // 1. Write available commands
+  cerr << log_tag(LogType::PROMPT) << " Press <SPACE> to run, Z to go to zero, R to reload program, Q to quit" << endl;
+
+  // 2. Stop the timer, for we are waiting indefinitely
+  data.timer->stop();
+
+  // 3. Wait for input and select next state
+  char key = keystroker::read_key();
+  switch(key) {
+    case ' ':
+      next_state = cncpp::STATE_LOAD_BLOCK;
+      break;
+    case 'r':
+    case 'R':
+      try {
+        data.program->load(data.program_file, false);
+        cerr << log_tag(LogType::MESSAGE) << " Program reloaded:" <<endl
+             << *data.program << endl;
+      } catch (exception const &e) {
+        cerr << log_tag(LogType::ERROR) << " Error reloading program: " << e.what() << endl;
+      }
+      break;
+    case 'z':
+    case 'Z':
+      next_state = cncpp::STATE_GO_TO_ZERO;
+      break;
+    case 'q':
+    case 'Q':
+      next_state = cncpp::STATE_STOP;
+      break;
+    default:
+      cerr << log_tag(LogType::WARNING) << " Wrong selection, pick another command" << endl;
+      // Since the next_state = NO_CHANGE the function do_idle will continue to loop
+  }
+
+  // 4. Re-enable timer
+  data.timer->start();
   return next_state;
 }
 
@@ -59,7 +111,36 @@ state_t do_idle(T &data) {
 template<class T> 
 state_t do_load_block(T &data) {
   state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
+  // STEPS =====================================================================
+
+  // 1. Load next block
+  data.program->load_next();
+
+  // 2. Go back if we reached the program end
+  if (data.program->done())
+    return cncpp::STATE_IDLE;
+  
+  // 3. Decide next state depending on block type
+  auto &b = *data.program->current();
+  cerr << log_tag(LogType::COMPUTATION) << " Loading: " << endl;
+  switch (b.type()) {
+    case Block::BlockType::NO_MOTION:
+      next_state = cncpp::STATE_NO_MOTION;
+      break;
+    case Block::BlockType::RAPID:
+      next_state = cncpp::STATE_RAPID_MOTION;
+      break;
+    case Block::BlockType::LINE:
+    case Block::BlockType::CWA:
+    case Block::BlockType::CCWA:
+      next_state = cncpp::STATE_INTERP_MOTION;
+      break;
+    default:
+      next_state = cncpp::STATE_IDLE;
+  }
+
+  // 4. Increment total time
+  data.t_tot += data.machine->tq();
   
   return next_state;
 }
@@ -69,8 +150,14 @@ state_t do_load_block(T &data) {
 // SIGINT triggers an emergency transition to STATE_STOP
 template<class T> 
 state_t do_rapid_motion(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
+  state_t next_state = cncpp::NO_CHANGE;
+  auto &b = *data.program->current();
+
+  cerr << log_tag(LogType::MESSAGE) << fg::cyan << " Rapid motion block:" << fg::reset
+       << b << endl;
+  next_state = cncpp::STATE_LOAD_BLOCK;
+
+  data.t_tot += data.machine->tq();
   
   return next_state;
 }
@@ -80,8 +167,39 @@ state_t do_rapid_motion(T &data) {
 // SIGINT triggers an emergency transition to STATE_STOP
 template<class T> 
 state_t do_interp_motion(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
+  state_t next_state = cncpp::NO_CHANGE;
+  // STEPS =====================================================================
+  // 1. Get current block and define some values
+  auto &b = *data.program->current();
+  data_t lambda, speed;
+  data_t tq = data.machine->tq();
+  Point p = data.machine->position();                   // actual position
+
+  // 2. Perform axes interpolation
+  Point tgt = b.interpolate(data.t_blk, lambda, speed); // target position
+
+  // 3. Print current values
+  //    p.x() and friend are optionals and may throw if undefined
+  try {
+    cout << fmt::format(
+      "{:0>3d},{:0>2d},{:.3f},{:.3f},{:.3f},{:.3f},,{:.1f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f}",
+      b.n(), static_cast<int>(b.type()), data.t_tot, data.t_blk, lambda, lambda * b.length(), speed, b.profile().current_acc, tgt.x(), tgt.y(), tgt.z(), p.x(), p.y(), p.z()
+    ) << endl; 
+  } catch (bad_optional_access const &e) {
+    cout << fmt::format(
+      "{:0>3d},{:0>2d},{:.3f},{:.3f},{:.3f},{:.3f},,{:.1f},{:.3f},{:.3f},{:.3f},{:.3f},{:>3},{:>3},{:>3}",
+      b.n(), static_cast<int>(b.type()), data.t_tot, data.t_blk, lambda, lambda * b.length(), speed, b.profile().current_acc, tgt.x(), tgt.y(), tgt.z(), "-", "-", "-"
+    ) << endl;
+  }
+
+  // 4. Check if we reached the end of block. A tlerance is used!
+  if (data.t_blk > b.dt() + tq / 10.0)
+    next_state = cncpp::STATE_LOAD_BLOCK;
+  
+  // 5. Update things
+  data.t_tot += tq;
+  data.t_blk += tq;
+   
   
   return next_state;
 }
@@ -90,9 +208,15 @@ state_t do_interp_motion(T &data) {
 // valid return states: STATE_LOAD_BLOCK
 template<class T> 
 state_t do_no_motion(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
-  
+  state_t next_state = cncpp::STATE_LOAD_BLOCK;
+  // STEPS =====================================================================
+  // 1. Give feedback
+  auto &b = *data.program->current();
+  cerr << log_tag(LogType::MESSAGE) << fg::yellow << " No motion block: " << b << fg::reset << endl;
+
+  // 2. Update timings
+  data.t_tot += data.machine->tq();
+
   return next_state;
 }
 
@@ -111,9 +235,13 @@ state_t do_go_to_zero(T &data) {
 // valid return states: NO_CHANGE
 template<class T> 
 state_t do_stop(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
-  
+  state_t next_state = cncpp::NO_CHANGE;
+  // STEPS =====================================================================
+  // 1. Reset SIGINT signal handler
+  signal(SIGINT, SIG_DFL);
+
+  // 2. Give feedback
+  cerr << log_tag(LogType::MESSAGE) << fg::red << style::bold << " STOP!" << style::reset << fg::reset << endl;
   return next_state;
 }
 
