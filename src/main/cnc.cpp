@@ -65,12 +65,14 @@ int main(int const argc, char const **argv)
     try {
       data.timer->wait_throw();
     } catch (const TimerError &e) {
-      cerr << cncpp::log_tag(cncpp::LogType::WARNING) << " Time error: " << e.what() << endl;
+      cerr << cncpp::log_tag(cncpp::LogType::WARNING) << " Timer error: " << e.what() << endl;
     }
   }); 
 
   // Run the FSM
-  // insert here the code
+  fsm.run([&](FsmData &s) {
+    // put here any op. that must be executed at each loop
+  });
 
   cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << " Program execution completed." << endl;
   
