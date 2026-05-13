@@ -269,7 +269,7 @@ void reset(T &data) {
   data.t_tot = 0;
   data.t_blk = 0;
   // Print header line for the CSV output
-  cout << "n,type,t_to,t_blk,lambda,s,feedrate,acc,xn,yn,zn,x,y,z" << endl;
+  cout << "n,type,t_tot,t_blk,lambda,s,feedrate,acc,xn,yn,zn,x,y,z" << endl;
 }
 
 // This function is called in 2 transitions:
