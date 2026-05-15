@@ -27,23 +27,22 @@ enabled = true
 relaunch = false
 tty = false
 
-#[perf_assess]
-#command = "mads perf_assess -p50"
-#after = "broker"
-#workdir = ""
-#enabled = false
-#relaunch = false
-#tty = false
+[perf_assess]
+command = "mads perf_assess -p50"
+after = "broker"
+workdir = ""
+enabled = false
+relaunch = false
+tty = false
 
 [fmu]
 command = "mads fmu models/fmu/machine_tool.fmu"
 after = "broker"
 workdir = "../FMU_agent"
-enabled = false
+enabled = true
 
 [machinetool]
-command = "mads sink build/machinetool.plugin"
-after = "fmu"
-workdir = "../mt_plugin"
+command = "mads sink lib/machinetool.plugin"
+after = "broker"
+workdir = "../machinetool-macos-arm64"
 enabled = false
-
