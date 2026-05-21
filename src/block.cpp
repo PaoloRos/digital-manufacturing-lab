@@ -51,7 +51,7 @@ string Block::desc(bool colored) const
 
   ss << format("[{:>3}] ", _n);
   if (colored)
-    ss << format("G{:0>2} ", styled(static_cast<int>(_type), fg(block_color)));
+    ss << format("G{:0>2} ", styled(static_cast<int>(_type), fmt::fg(block_color)));
   else
     ss << format("G{:0>2} ", static_cast<int>(_type));
 

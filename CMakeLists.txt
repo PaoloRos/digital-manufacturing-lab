@@ -165,7 +165,7 @@ file(GLOB HEADERS ${SRC_DIR}/*.hpp)
 
 add_library(cncpp STATIC ${SRC_FILES})
 target_include_directories(cncpp PUBLIC ${SRC_DIR})
-target_link_libraries(cncpp PUBLIC fmt::fmt)
+target_link_libraries(cncpp PUBLIC fmt::fmt Mads::Mads)
 target_compile_definitions(cncpp PRIVATE CNCPP_TEST_PROGRAM_MAIN)
 
 if(BUILD_TESTING)
@@ -201,7 +201,7 @@ if(BUILD_QUICK_TESTS)
 endif()
 
 add_executable(cnc ${SRC_DIR}/main/cnc.cpp)
-target_link_libraries(cnc PRIVATE cncpp Mads::Mads keystroker rang fmt)
+target_link_libraries(cnc PRIVATE cncpp keystroker rang fmt)
 
 #   ___           _        _ _
 #  |_ _|_ __  ___| |_ __ _| | |

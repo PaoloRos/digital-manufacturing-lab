@@ -9,16 +9,34 @@ Date: 2026-04-28
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <chrono>
+
+#define MACHINE_ID "cncpp"
 
 using namespace cncpp;
 using namespace std;
+using namespace Mads;
+using namespace chrono_literals;  // allows to write '100ms'
 using json = nlohmann::json;
 
 // LIFECYCLE ===================================================================
 
 Machine::Machine(json &j) { load(j); }
 
-Machine::Machine(std::string &filename) { load(filename); }
+Machine::Machine(std::string &filename) 
+{ 
+  // if a proper tcp address --> connect to MADS server instead of loading from file
+  if( filename.substr(0,6) == "tcp://" ) 
+    connect(MACHINE_ID, filename);
+  else // otherwise, load from file
+    load(filename);
+}
+
+Machine::~Machine()
+{
+  if( _agent && _agent->is_connected() )
+    _agent->disconnect();
+}
 
 std::string Machine::desc(bool colored) const
 {
@@ -176,6 +194,78 @@ data_t Machine::quantize(data_t t, data_t &dq) const
   q = static_cast<size_t>( t/_tq + 1) * _tq;  // q > t
   dq = q - t;                                 // quantization error
   return q;
+}
+
+void Machine::connect(const string &name, const string &url)
+{
+  // Allocate an instance for the smart ptr
+  _agent = make_unique<Agent>(name, url);
+  // Fetching the content of the settings from the broker
+  _agent->init();
+  json settings = _agent->get_settings();
+  load(settings); // Load the settings into the current machine
+  _agent->set_agent_id(MACHINE_ID);
+  _agent->set_receive_timeout(1000ms); 
+  _agent->set_high_watermark(1);  // audio
+  // All the setting before connection
+  _agent->connect();
+  
+  clear_command();
+}
+
+void Machine::sync()
+{
+  if (!_agent) { return; }
+
+  try {
+    _agent->publish(_command);
+    _agent->receive();
+    _state = json::parse( get<1>(_agent->last_message()) );
+    
+    try {
+      _position.x( _state["output"]["position"].at(0).get<data_t>() );
+      _position.y( _state["output"]["position"].at(1).get<data_t>() );
+      _position.z( _state["output"]["position"].at(2).get<data_t>() );
+    } catch (exception const &e) {
+      cerr << log_tag(LogType::ERROR) << " Error parsing position from MADS state: " << e.what() << endl;
+    }
+
+  } catch (exception const &e) {
+    cerr << log_tag(LogType::ERROR) << " Error during MADS sync: " << e.what() << endl;
+  }
+
+  try {
+    _error = _setpoint.delta(position()).length();
+  } catch (exception const &e) {
+    cerr << log_tag(LogType::WARNING) << " Error computing machine error: " << e.what() << " : _error setted to NaN." << endl;
+    _error = numeric_limits<data_t>::quiet_NaN();
+  }
+
+  clear_command();
+}
+
+
+void Machine::set_setpoint(Point const &p) 
+{
+  _setpoint = p;
+  if (_agent) {
+    _command["fmu_input"]["setpoint"] = { p.x(), p.y(), p.z() };
+    sync();
+  }
+}
+
+void Machine::reset()
+{
+  if (_agent) {
+    _command["fmu_reset"] = true;
+    sync();
+  }
+}
+
+void Machine::clear_command()
+{
+  _command["fmu_input"] = json::object();
+  _command["fmu_reset"] = false;
 }
 
 /*

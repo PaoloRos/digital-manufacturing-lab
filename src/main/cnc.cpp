@@ -30,7 +30,8 @@ struct FsmData {
 
 int main(int const argc, char const **argv)
 {
-  string machine_file = "machine.toml"; // default name
+  // hard coding -> upgrade with the command line argv
+  string machine_file = "tcp://localhost:9092"; // default name
 
   if (argc < 2) {
     cerr << cncpp::log_tag(cncpp::LogType::ERROR) << " Usage: " << argv[0] << " <program.gcode> [machine.toml]" << endl;
@@ -45,6 +46,13 @@ int main(int const argc, char const **argv)
     .program_file = program_file,
     .machine = make_unique<cncpp::Machine>(machine_file)
   };
+  if (data.machine->agent()) {
+    cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << fg::blue << " Connected to MADS broker at " << machine_file << fg::reset << endl;
+    data.machine->agent()->info(cerr);
+  } else {
+    cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << fg::green << " Loaded machine configuration file: " << machine_file << fg::reset << endl;
+  }
+
   cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << " Machine initialized:\n" << *data.machine << endl;
 
   // Prepare timer
