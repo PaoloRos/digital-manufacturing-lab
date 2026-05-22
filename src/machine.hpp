@@ -82,20 +82,53 @@ class Machine : public Object {
   data_t quantize(data_t t, data_t &dq) const;
 
   // MADS RELATED ==============================================================
-
-  // Connection to the Network
-  // Default MAds URL is "tcp://localhost:9092"
+  
+  /**
+   * @brief Connect to the MADS  broker and initialize the agent for machine control.
+   * 
+   * The agent will get from the broker the machine settings in the section having its `name`.
+   * 
+   * @param name Client name/identifier, used for registration with the MADS broker.
+   * @param url Remote endpoint URL: broker ADR.
+   */
   void connect(std::string const &name, std::string const &url = "tcp://localhost:9092");
 
-  // Synchronizing the current state to the remote state (the FMU simulator)
+  /**
+   * @brief Synchronize (by sending and receiving) the local state with the remote simulator.
+   */
   void sync();
 
-  // Sending a setpoint for the axes
+  /**
+   * @brief Send metrics to the MADS broker.
+   * 
+   * Metrics can be anu informative JSON object made by scalars (numbers or strings), that can be viewed by the mt_viewer plugin.
+   * 
+   * @param metrics JSON object containing the metrics to be sent (a dictionary of keys and scalar values, numbers or strings).
+   * 
+   */
+  void send_metrics(nlohmann::json const &metrics);
+
+  /**
+   * @brief Send an axes setpoint to the remote simulator.
+   * 
+   * This call implicitly calls `sync()` to send the new setpoint to the agent and update the machinde state.
+   * 
+   * @param p The setpoint coordinates.
+   */
   void set_setpoint(Point const &p);
 
+  /**
+   * @brief Reset the machine state.
+   * 
+   * This call implicitly calls `sync()` to send the reset command to the agent and update the machine state.
+   * 
+   */
   void reset();
 
-  // Knowing whether the client is connected to the server
+  /**
+   * @brief Check whether the MADS client is connected.
+   * @return True when connected.
+   */
   bool is_connected() const { return _agent && _agent->is_connected(); }
 
   
@@ -177,12 +210,12 @@ class Machine : public Object {
    */
   Point position() const { return _position; }
   
-  /**
-   * @brief Update machine position.
-   * @param p New position.
-   * @return Updated position.
-   */
-  Point position(Point p) { return _position = p; }
+  ///**
+  // * @brief Update machine position.
+  // * @param p New position.
+  // * @return Updated position.
+  // */
+  //Point position(Point p) { return _position = p; }
   
   /**
    * @brief Get the raw configuration data as JSON.
@@ -190,9 +223,16 @@ class Machine : public Object {
    */
   nlohmann::json data() const { return _data; }
   
-  // Return a pointer to the MADS agent
+  /**
+   * @brief Get the MADS agent instance associated with the machine, if any.
+   * @return Pointer to the agent, or nullptr if not initialized.
+   */
   Mads::Agent *agent() const { return _agent.get(); }
   
+  /**
+   * @brief Get the last state received from the simulator.
+   * @return JSON state object.
+   */
   nlohmann::json state() const { return _state; }
   
   private:
@@ -214,6 +254,7 @@ class Machine : public Object {
   
   // MADS agent
   
+  // Clear pending command fields to a safe default state.
   void clear_command();
   
   std::unique_ptr<Mads::Agent> _agent;

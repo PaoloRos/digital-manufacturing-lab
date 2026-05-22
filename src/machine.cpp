@@ -12,6 +12,7 @@ Date: 2026-04-28
 #include <chrono>
 
 #define MACHINE_ID "cncpp"
+#define FMU_MACHINE_TOOL_TOPIC "fmu_machine_tool"
 
 using namespace cncpp;
 using namespace std;
@@ -25,7 +26,7 @@ Machine::Machine(json &j) { load(j); }
 
 Machine::Machine(std::string &filename) 
 { 
-  // if a proper tcp address --> connect to MADS server instead of loading from file
+  // if a proper tcp address -> connect to MADS server instead of loading from file
   if( filename.substr(0,6) == "tcp://" ) 
     connect(MACHINE_ID, filename);
   else // otherwise, load from file
@@ -206,8 +207,9 @@ void Machine::connect(const string &name, const string &url)
   load(settings); // Load the settings into the current machine
   _agent->set_agent_id(MACHINE_ID);
   _agent->set_receive_timeout(1000ms); 
-  _agent->set_high_watermark(1);  // audio
-  // All the setting before connection
+  _agent->set_high_watermark(1);  //set the maximum number of messages in the queue to 1, to avoid receiving stale messages
+
+  // All the setting before connection!
   _agent->connect();
   
   clear_command();
@@ -266,6 +268,15 @@ void Machine::clear_command()
 {
   _command["fmu_input"] = json::object();
   _command["fmu_reset"] = false;
+}
+
+void Machine::send_metrics(json const &metrics)
+{
+  if (_agent) {
+    auto msg = json::object();
+    msg["metrics"] = metrics;
+    _agent->publish(msg, FMU_MACHINE_TOOL_TOPIC);
+  }
 }
 
 /*

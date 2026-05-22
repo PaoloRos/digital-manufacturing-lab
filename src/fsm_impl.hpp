@@ -162,7 +162,7 @@ state_t do_rapid_motion(T &data) {
     cerr << "Current position: " << data.machine->position()
          << "current error: " << data.machine->error() << " mm"<< endl;
     if ( data.machine->error() < data.machine->max_error() ) {
-      next_state = cncpp::STATE_LOAD_MOTION;
+      next_state = cncpp::STATE_NO_MOTION;  // STATE_LOAD_MOTION
     }
   } else {
     cerr << log_tag(LogType::WARNING) << " Machine not connected: skipping rapid motion to!"
