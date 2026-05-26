@@ -29,3 +29,7 @@ imgui.ini
 # R wrapper
 R/**/*.html
 R/**/*_files/
+
+# MADS
+
+mads_chat_settings.json

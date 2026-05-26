@@ -67,6 +67,9 @@ state_t do_idle(T &data) {
   // STEPS =====================================================================
 
   // 1. Write available commands
+  cerr << log_tag(LogType::PROMPT) << fg::green << " Press <SPACE>" << fg::reset << " to run, ";
+
+
   cerr << log_tag(LogType::PROMPT) << " Press <SPACE> to run, R to reload program, Q to quit";
   if (data.machine->is_connected()) {
     cerr << ", Z to go to zero" << endl;

@@ -30,16 +30,21 @@ struct FsmData {
 
 int main(int const argc, char const **argv)
 {
-  // hard coding -> upgrade with the command line argv
-  string machine_file = "tcp://localhost:9092"; // default name
+  string const k_dafault_machine_file = "tcp://localhost:9092";
 
   if (argc < 2) {
-    cerr << cncpp::log_tag(cncpp::LogType::ERROR) << " Usage: " << argv[0] << " <program.gcode> [machine.toml]" << endl;
+    cerr << cncpp::log_tag(cncpp::LogType::ERROR)
+         << " Usage: " << argv[0] << " <program.gcode> [machine.toml] [tcp://host:port] (optional)" << endl;
     return 1;
   }
-  string program_file = argv[1];
+  if (argc >= 4) {
+    cerr << cncpp::log_tag(cncpp::LogType::ERROR)
+         << " Too many arguments. Usage: " << argv[0] << " <program.gcode> [machine.toml] [tcp://host:port] (optional)" << endl;
+    return 1;
+  }
 
-  if (argc >= 3) machine_file = argv[2];
+  string program_file = argv[1];
+  string machine_file = (argc >= 3) ? argv[2] : k_dafault_machine_file;
 
   // Initialise data struct
   FsmData data{
@@ -50,10 +55,10 @@ int main(int const argc, char const **argv)
     cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << fg::blue << " Connected to MADS broker at " << machine_file << fg::reset << endl;
     data.machine->agent()->info(cerr);
   } else {
-    cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << fg::green << " Loaded machine configuration file: " << machine_file << fg::reset << endl;
+    cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << fg::green << " Loaded machine configuration file from " << machine_file << fg::reset << endl;
   }
 
-  cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << " Machine initialized:\n" << *data.machine << endl;
+  cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << style::bold << " Machine initialized:\n" << *data.machine << style::reset << endl;
 
   // Prepare timer
   double_d timer_interval(data.machine->tq());  // effective timer period
@@ -83,9 +88,6 @@ int main(int const argc, char const **argv)
   });
 
   cerr << cncpp::log_tag(cncpp::LogType::MESSAGE) << " Program execution completed." << endl;
-  
-  
-  
   
   return 0;
 }
