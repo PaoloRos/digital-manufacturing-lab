@@ -17,6 +17,7 @@ The finite state machine has:
 #include <rang.hpp>
 #include <fmt/format.h>
 #include <keystroker.h>
+#include <goback.hpp>
 
 using namespace std;
 using namespace fmt;
@@ -68,13 +69,9 @@ state_t do_idle(T &data) {
 
   // 1. Write available commands
   cerr << log_tag(LogType::PROMPT) << fg::green << " Press <SPACE>" << fg::reset << " to run, ";
-
-
-  cerr << log_tag(LogType::PROMPT) << " Press <SPACE> to run, R to reload program, Q to quit";
-  if (data.machine->is_connected()) {
-    cerr << ", Z to go to zero" << endl;
-  }
-  cerr << endl;
+  if (data.machine->is_connected())
+    cerr << fg::blue << "Z" << fg::reset << " to go to zero, ";
+  cerr << fg::cyan << "R" << fg::reset << " to reload program, " << fg::red << "Q" << fg::reset << " to quit" << endl;
 
   // 2. Stop the timer, for we are waiting indefinitely
   data.timer->stop();
@@ -146,6 +143,8 @@ state_t do_load_block(T &data) {
       next_state = cncpp::STATE_IDLE;
   }
 
+  data.machine->send_metrics( {{"line", b.line()}} );
+
   // 4. Increment total time
   data.t_tot += data.machine->tq();
   
@@ -160,25 +159,27 @@ state_t do_rapid_motion(T &data) {
   state_t next_state = cncpp::NO_CHANGE;
   auto &b = *data.program->current();
 
-  data.machine->set_setpoint(b.target());
+  data.machine->set_setpoint(b.target());   // command the endpoint
   if (data.machine->is_connected()) {
-    cerr << "Current position: " << data.machine->position()
+    cerr << Mads::goback(1)
+         << "Current position: " << data.machine->position()
          << "current error: " << data.machine->error() << " mm"<< endl;
-    if ( data.machine->error() < data.machine->max_error() ) {
-      next_state = cncpp::STATE_NO_MOTION;  // STATE_LOAD_MOTION
-    }
+    if ( data.machine->error() < data.machine->max_error() )
+      next_state = cncpp::STATE_LOAD_BLOCK;
   } else {
-    cerr << log_tag(LogType::WARNING) << " Machine not connected: skipping rapid motion to!"
-         << b.target() << endl;
+    cerr << Mads::goback(1) << log_tag(LogType::WARNING) 
+         << " Machine not connected: skipping rapid motion to "
+         << b.target() << fg::reset<< endl;
     next_state = cncpp::STATE_LOAD_BLOCK;
   }
-
-  cerr << log_tag(LogType::MESSAGE) << fg::cyan << " Rapid motion block:" << fg::reset
-       << b << endl;
-  next_state = cncpp::STATE_LOAD_BLOCK;
-
+  
   data.t_tot += data.machine->tq();
   data.t_blk += data.machine->tq();
+
+  if (stop_requested) {
+    stop_requested = false; // reset flag
+    next_state = cncpp::STATE_LOAD_BLOCK;
+  }
 
   return next_state;
 }
@@ -189,6 +190,7 @@ state_t do_rapid_motion(T &data) {
 template<class T> 
 state_t do_interp_motion(T &data) {
   state_t next_state = cncpp::NO_CHANGE;
+
   // STEPS =====================================================================
   // 1. Get current block and define some values
   auto &b = *data.program->current();
@@ -198,6 +200,7 @@ state_t do_interp_motion(T &data) {
 
   // 2. Perform axes interpolation
   Point tgt = b.interpolate(data.t_blk, lambda, speed); // target position
+  data.machine->set_setpoint(tgt);                      // command the target position
 
   // 3. Print current values
   //    p.x() and friend are optionals and may throw if undefined
@@ -246,9 +249,14 @@ state_t do_no_motion(T &data) {
 // SIGINT triggers an emergency transition to STATE_STOP
 template<class T> 
 state_t do_go_to_zero(T &data) {
-  state_t next_state = cncpp::UNIMPLEMENTED;
-  /* Your Code Here */
-  
+  state_t next_state = cncpp::NO_CHANGE;
+  data.machine->set_setpoint(data.machine->zero());
+  cerr << Mads::goback(1)
+       << "Current position: " << data.machine->position()
+       << "current error: " << data.machine->error() << " mm"<< endl;
+  if ( data.machine->error() < data.machine->max_error() )
+    next_state = cncpp::STATE_IDLE;
+
   return next_state;
 }
 
@@ -300,6 +308,7 @@ template<class T>
 void begin_rapid(T &data) {
   // Reset block time
   data.t_blk = 0;
+  data.machine->send_metrics( {{"rapid_start", data.t_tot}} );
 }
 
 // This function is called in 2 transitions:
@@ -307,7 +316,7 @@ void begin_rapid(T &data) {
 // 2. from go_to_zero to idle
 template<class T>
 void end_rapid(T &data) {
-  /* Your Code Here */
+  data.machine->send_metrics( {{"rapid_end", data.t_tot}} );
 }
 
 // This function is called in 1 transition:
