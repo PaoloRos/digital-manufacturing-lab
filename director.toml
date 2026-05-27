@@ -36,7 +36,19 @@ relaunch = false
 tty = false
 
 [fmu]
-command = "mads fmu models/fmu/machine_tool.fmu"
+command = "mads fmu models/fmu/machine_tool.fmu -p 5"
 after = "broker"
 workdir = "../MADS-plugins/FMU_agent"
+enabled = false
+
+[fmu_triggered]
+command = "mads fmu models/fmu/machine_tool.fmu -t"
+after = "broker"
+workdir = "../MADS-plugins/FMU_agent"
+enabled = false
+
+[machinetool]
+command = "mads sink build/machinetool.plugin"
+after = "broker"
+workdir = "../MADS-plugins/mt_plugin"
 enabled = false

@@ -30,22 +30,19 @@ struct FsmData {
 
 int main(int const argc, char const **argv)
 {
-  string const k_dafault_machine_file = "tcp://localhost:9092";
+  string machine_file = "tcp://localhost:9092";
 
   if (argc < 2) {
     cerr << cncpp::log_tag(cncpp::LogType::ERROR)
-         << " Usage: " << argv[0] << " <program.gcode> [machine.toml] [tcp://host:port] (optional)" << endl;
-    return 1;
-  }
-  if (argc >= 4) {
-    cerr << cncpp::log_tag(cncpp::LogType::ERROR)
-         << " Too many arguments. Usage: " << argv[0] << " <program.gcode> [machine.toml] [tcp://host:port] (optional)" << endl;
+         << " Usage: " << argv[0] << " <program.gcode> [machine.toml|tcp://host:port] (optional)" << endl;
     return 1;
   }
 
   string program_file = argv[1];
-  string machine_file = (argc >= 3) ? argv[2] : k_dafault_machine_file;
 
+  if (argc >= 3) machine_file = argv[2];
+
+  
   // Initialise data struct
   FsmData data{
     .program_file = program_file,
