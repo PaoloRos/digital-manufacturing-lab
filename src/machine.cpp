@@ -11,7 +11,7 @@ Date: 2026-04-28
 #include <filesystem>
 #include <chrono>
 
-#define MACHINE_ID "cncpp"
+#define MACHINE_ID "cnc"
 #define FMU_MACHINE_TOOL_TOPIC "fmu_machine_tool"
 
 using namespace cncpp;
