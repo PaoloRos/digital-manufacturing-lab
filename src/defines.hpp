@@ -70,30 +70,35 @@ enum class LogType {
 /**
  * @brief Build a bold colored tag for terminal logging.
  * @param type Log category.
- * @param os Output stream to validate as terminal.
- * @return Formatted tag string like "[Message]".
- * @throws std::runtime_error If the stream is not a terminal stream.
+ * @param os Output stream used to determine whether colors are supported.
+ * @return Formatted tag string like "[Message]", colored on terminal streams.
  */
 inline std::string log_tag(LogType type, std::ostream &os = std::cerr)
 {
   bool const is_terminal = (&os == &std::cout && isatty(STDOUT_FILENO)) ||
                            (&os == &std::cerr && isatty(STDERR_FILENO));
 
-  if (!is_terminal) {
-    throw std::runtime_error("cncpp::log_tag works only with terminal output streams");
-  }
-
   switch (type) {
   case LogType::MESSAGE:
-    return fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]");
+    return is_terminal
+             ? fmt::format(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "[Message]")
+             : "[Message]";
   case LogType::COMPUTATION:
-    return fmt::format(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "[Computation]");
+    return is_terminal
+             ? fmt::format(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "[Computation]")
+             : "[Computation]";
   case LogType::WARNING:
-    return fmt::format(fmt::fg(fmt::color::gold) | fmt::emphasis::bold, "[Warning]");
+    return is_terminal
+             ? fmt::format(fmt::fg(fmt::color::gold) | fmt::emphasis::bold, "[Warning]")
+             : "[Warning]";
   case LogType::ERROR:
-    return fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[Error]");
+    return is_terminal
+             ? fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[Error]")
+             : "[Error]";
   case LogType::PROMPT:
-    return fmt::format(fmt::fg(fmt::color::cyan) | fmt::emphasis::bold, "[Prompt]");
+    return is_terminal
+             ? fmt::format(fmt::fg(fmt::color::cyan) | fmt::emphasis::bold, "[Prompt]")
+             : "[Prompt]";
   default:
     throw std::runtime_error("Unsupported cncpp::LogType value");
   }

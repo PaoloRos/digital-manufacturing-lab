@@ -103,11 +103,11 @@ static string coord_str(opt_data_t const &coord, col_t const &color)
 {
   string str;
   if (coord && color) {
-    str = format( "{:" CNCPP_NUMBERS_WIDTH ".3f}", styled(coord.value(), fg(color.value())) );  // styled() allows to apply a text style to a value, and fg() creates a text style with a foreground color
+    str = fmt::format( "{:" CNCPP_NUMBERS_WIDTH ".3f}", styled(coord.value(), fg(color.value())) );  // styled() allows to apply a text style to a value, and fg() creates a text style with a foreground color
   } else if (coord) {
-    str = format("{:" CNCPP_NUMBERS_WIDTH ".3f}", coord.value());  // just number
+    str = fmt::format("{:" CNCPP_NUMBERS_WIDTH ".3f}", coord.value());  // just number
   } else {
-    str = format( "{:>" CNCPP_NUMBERS_WIDTH "}", "-" ); // 8 spaces + '-', to align with the other coordinates
+    str = fmt::format( "{:>" CNCPP_NUMBERS_WIDTH "}", "-" ); // 8 spaces + '-', to align with the other coordinates
   }
   return str;
 }
