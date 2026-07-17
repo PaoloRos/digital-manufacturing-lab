@@ -1,22 +1,41 @@
-N10 G00 X100 Y100 Z100 ; Rapid move to safe start position above first corner
-N20 G01 Z50 F1000 S5000 M03 ; Start spindle and feed down to base plane (Z=50)
+N10 G00 X100 Y220 Z50 ; Move to the front-left corner of the hull
+N20 G01 X280 Y220 Z50 F1000 S5000 M03 ; Front hull: top edge
+N30 G01 X250 Y280 Z50 ; Front hull: right side
+N40 G01 X130 Y280 Z50 ; Front hull: bottom edge
+N50 G01 X100 Y220 Z50 ; Front hull: left side
 
-N30 G01 X160 Y100 Z50 ; Base edge 1: (100,100,50) -> (160,100,50)
-N40 G01 X160 Y140 Z50 ; Base edge 2
-N50 G01 X100 Y140 Z50 ; Base edge 3
-N60 G01 X100 Y100 Z50 ; Base edge 4 (close base rectangle)
+N60 G01 X100 Y220 Z110 ; Connect the front and back hulls
+N70 G01 X280 Y220 Z110 ; Back hull: top edge
+N80 G01 X250 Y280 Z110 ; Back hull: right side
+N90 G01 X130 Y280 Z110 ; Back hull: bottom edge
+N100 G01 X100 Y220 Z110 ; Back hull: left side
 
-N70 G01 X100 Y100 Z80 ; Vertical edge at corner A
-N80 G01 X160 Y100 Z80 ; Top edge 1
-N90 G01 X160 Y100 Z50 ; Vertical edge at corner B (down)
-N100 G01 X160 Y100 Z80 ; Vertical edge at corner B (up, return to top)
-N110 G01 X160 Y140 Z80 ; Top edge 2
-N120 G01 X160 Y140 Z50 ; Vertical edge at corner C (down)
-N130 G01 X160 Y140 Z80 ; Vertical edge at corner C (up, return to top)
-N140 G01 X100 Y140 Z80 ; Top edge 3
-N150 G01 X100 Y140 Z50 ; Vertical edge at corner D (down)
-N160 G01 X100 Y140 Z80 ; Vertical edge at corner D (up, return to top)
-N170 G01 X100 Y100 Z80 ; Top edge 4 (close top rectangle)
-N180 G01 X100 Y100 Z50 ; Return to base at corner A
+N110 G00 X280 Y220 Z50 ; Reposition to the front-right hull corner
+N120 G01 X280 Y220 Z110 ; Connect the top-right hull corners
+N130 G00 X250 Y280 Z50 ; Reposition to the front lower-right corner
+N140 G01 X250 Y280 Z110 ; Connect the lower-right hull corners
+N150 G00 X130 Y280 Z50 ; Reposition to the front lower-left corner
+N160 G01 X130 Y280 Z110 ; Connect the lower-left hull corners
 
-N190 G00 Z100 ; Rapid retract to safe height
+N170 G00 X190 Y220 Z50 ; Move to the front base of the mast
+N180 G01 X190 Y70 Z50 ; Draw the front mast
+N190 G01 X190 Y70 Z110 ; Connect the mast tops
+N200 G01 X190 Y220 Z110 ; Draw the back mast
+N210 G01 X190 Y220 Z50 ; Connect the mast bases
+
+N220 G00 X196 Y85 Z50 ; Move to the front sail tip
+N230 G01 X265 Y190 Z50 ; Front sail: outer edge
+N240 G01 X196 Y190 Z50 ; Front sail: bottom edge
+N250 G01 X196 Y85 Z50 ; Close the front sail
+
+N260 G01 X196 Y85 Z110 ; Connect the sail tips
+N270 G01 X265 Y190 Z110 ; Back sail: outer edge
+N280 G01 X196 Y190 Z110 ; Back sail: bottom edge
+N290 G01 X196 Y85 Z110 ; Close the back sail
+
+N300 G00 X265 Y190 Z50 ; Reposition to the front outer sail corner
+N310 G01 X265 Y190 Z110 ; Connect the outer sail corners
+N320 G00 X196 Y190 Z50 ; Reposition to the front lower sail corner
+N330 G01 X196 Y190 Z110 ; Connect the lower sail corners
+
+N340 G00 Z160 M05 ; Stop the spindle and retract above the model

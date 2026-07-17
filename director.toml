@@ -12,7 +12,7 @@ sample_rate = 2.0 # optional, default=2.0: process metrics sampling period in se
 command = "mads broker" # mandatory: command line to execute
 # command supports variables: ${PWD}=resolved workdir, ${ID}=instance index (0-based)
 after = "" # optional, default="": start after this process name
-workdir = "" # optional, default="": working directory (uses director working directory)
+workdir = "" # optional, default="": working directory; default and relative paths resolve against the director.toml directory
 enabled = true # optional, default=true: when false, skip auto-start (manual start still allowed)
 scale = 1 # optional, default=1: number of instances to launch
 relaunch = true # optional, default=false: restart on non-zero exit status
@@ -24,14 +24,16 @@ command = "mads feedback"
 after = "broker"
 workdir = ""
 enabled = true
+scale = 1
 relaunch = false
 tty = false
 
 [perf_assess]
-command = "mads perf_assess -p50"
+command = "mads perf_assess -p10 -i${ID}"
 after = "broker"
 workdir = ""
 enabled = false
+scale = 2
 relaunch = false
 tty = false
 
@@ -39,7 +41,7 @@ tty = false
 command = "mads fmu models/fmu/machine_tool.fmu -p 5"
 after = "broker"
 workdir = "../MADS-plugins/FMU_agent"
-enabled = false
+enabled = true
 
 [fmu_triggered]
 command = "mads fmu models/fmu/machine_tool.fmu -t"
